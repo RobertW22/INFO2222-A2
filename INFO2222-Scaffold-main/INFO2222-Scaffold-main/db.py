@@ -32,3 +32,41 @@ def insert_user(username: str, password: str):
 def get_user(username: str):
     with Session(engine) as session:
         return session.get(User, username)
+    
+
+def add_friend(current_user, friend_username):
+    with Session(engine) as session:
+        # Query user object from the database
+        user = session.get(User, current_user)
+        friend = session.get(User, friend_username)
+        
+        if not user:
+            raise ValueError("User not found")
+        
+        if not friend:
+            raise ValueError("Friend not found")
+        
+        # Add friend to user's friends list
+        if user.friends:
+
+            if friend_username in user.friends:
+                return "Friend already added"
+            else:
+                user.friends += "," + friend_username
+        else:
+            user.friends = friend_username
+
+        
+        # Add user to friend's friends list (bidirectional)
+        if friend.friends:
+            if current_user in friend.friends:
+                return "Friend already added"
+            else:
+                friend.friends += "," + current_user
+        else:
+            friend.friends = current_user
+
+        session.commit()
+
+
+    

@@ -9,6 +9,7 @@ from flask_socketio import SocketIO
 import db
 import secrets
 
+
 # import logging
 
 # this turns off Flask Logging, uncomment this to turn off Logging
@@ -84,5 +85,21 @@ def home():
 
 
 
+@app.route("/add_friend", methods=["POST"])
+def add_Friend():
+    
+    if not request.is_json:
+        abort(404)
+
+    username = request.json.get("username")
+    friendsName = request.json.get("friendUsername")
+
+    db.add_friend(username,friendsName)
+
+    # Need to add error message.
+
 if __name__ == '__main__':
-    socketio.run(app)
+    socketio.run(app, ssl_context=('/usr/local/share/ca-certificates/myCA.crt', './certs/myCA.key'))
+    
+
+    #crt file 

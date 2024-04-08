@@ -186,6 +186,21 @@
         socket.emit("send", username, message, room_id);  
     } 
 
+
+    function addFriend(){
+
+        // get inputfield
+        let friend_username = document.getElementById("friend_username).value;
+
+        if(!friendUsername.trim()){
+            alert("Please enter a valid username");
+            return;
+        }
+
+
+        
+    }
+
     // we emit a join room event to the server to join a room
     function join_room() {
        

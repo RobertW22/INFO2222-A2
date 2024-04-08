@@ -10,13 +10,24 @@ Prisma docs also looks so much better in comparison
 or use SQLite, if you're not into fancy ORMs (but be mindful of Injection attacks :) )
 '''
 
-from sqlalchemy import String
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import String, table, Column, Integer, ForeignKey, Table
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from typing import Dict
+
+
+
+
+
+
 
 # data models
 class Base(DeclarativeBase):
     pass
+
+
+
+
+
 
 # model to store user information
 class User(Base):
@@ -31,6 +42,7 @@ class User(Base):
     password: Mapped[str] = mapped_column(String)
     
     
+    friends: Mapped[str] = mapped_column(String) #store as a string of comma separated values
 
         
     

@@ -1,0 +1,11 @@
+python3 -m venv venv
+. nenv/bin/activate
+
+
+pip3 install -r requirements.txt
+
+
+
+
+
+Models.py - Manages the SQL tables. The mapped colums are iterable.
