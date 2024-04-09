@@ -72,3 +72,15 @@ def add_friend(current_user, friend_username):
 
 
     
+def sendFriendRequest(username,target):
+
+    targetAccount = get_user(target)
+    print(target)
+    
+    if not targetAccount:
+        return "friend not found"
+
+    targetAccount.friendRequests.append(username)
+
+    #for testing
+    return targetAccount.friendRequests

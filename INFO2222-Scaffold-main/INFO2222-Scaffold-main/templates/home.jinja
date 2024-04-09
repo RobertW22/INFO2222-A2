@@ -123,6 +123,20 @@
         <input id="friend_username" type="text" placeholder="Enter friend's username">
         <button onclick="addFriend()">Add Friend</button>
     </section>
+
+    <!-- Testing forms -->
+    <section>
+    
+        <form action="/add_friend" method="post">
+        
+            <input type="hidden" name="username" value="{{ username }}">
+            <p class="text">Add friend:</p>
+
+            <input type="text" name="friend_username" placeholder="Enter friends's Username here">
+            <input type="submit" value="Add Friend">
+        </form>
+    
+    </section>
         
 
 

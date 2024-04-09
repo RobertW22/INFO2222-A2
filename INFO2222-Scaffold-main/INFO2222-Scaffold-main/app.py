@@ -4,7 +4,7 @@ this is where you'll find all of the get/post request handlers
 the socket event handlers are inside of socket_routes.py
 '''
 
-from flask import Flask, render_template, request, abort, url_for
+from flask import Flask, render_template, request, abort, url_for, session, redirect
 from flask_socketio import SocketIO
 import db
 import secrets
@@ -44,12 +44,16 @@ def login_user():
     username = request.json.get("username")
     password = request.json.get("password")
 
+    
+
     user =  db.get_user(username)
     if user is None:
         return "Error: User does not exist!"
 
     if user.password != password:
         return "Error: Password does not match!"
+    
+    session['username'] = username
 
     return url_for('home', username=request.json.get("username"))
 
@@ -88,15 +92,25 @@ def home():
 @app.route("/add_friend", methods=["POST"])
 def add_Friend():
     
-    if not request.is_json:
-        abort(404)
+    username = request.form.get("username")
+    friendsName = request.form.get("friend_username")
 
-    username = request.json.get("username")
-    friendsName = request.json.get("friendUsername")
+    #print(username)
+    #print(friendsName)
 
-    db.add_friend(username,friendsName)
 
-    # Need to add error message.
+    #username = request.json.get("username")
+    #friendsName = request.json.get("friendUsername")
+
+    # Print returned friend request list
+    print(db.sendFriendRequest(username,friendsName))
+
+    
+    return render_template("home.jinja")
+
+
+
+    # IT WORKS! but I need to maybe add a sent requests box
 
 if __name__ == '__main__':
     socketio.run(app, ssl_context=('/usr/local/share/ca-certificates/myCA.crt', './certs/myCA.key'))
