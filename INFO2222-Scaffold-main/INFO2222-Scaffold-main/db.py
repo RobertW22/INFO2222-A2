@@ -34,6 +34,10 @@ def get_user(username: str):
         return session.get(User, username)
     
 
+
+
+#get request to get all the friends of a user
+#there is some fuction that gets posts requests ..
 def add_friend(current_user, friend_username):
     with Session(engine) as session:
         # Query user object from the database
@@ -52,9 +56,8 @@ def add_friend(current_user, friend_username):
             if friend_username in user.friends:
                 return "Friend already added"
             else:
-                user.friends += "," + friend_username
-        else:
-            user.friends = friend_username
+                user.friends.append(friend_username)
+        
 
         
         # Add user to friend's friends list (bidirectional)
@@ -62,9 +65,8 @@ def add_friend(current_user, friend_username):
             if current_user in friend.friends:
                 return "Friend already added"
             else:
-                friend.friends += "," + current_user
-        else:
-            friend.friends = current_user
+                friend.friends.append(current_user)
+        
 
         session.commit()
 

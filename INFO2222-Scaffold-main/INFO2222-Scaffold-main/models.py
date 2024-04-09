@@ -42,7 +42,9 @@ class User(Base):
     password: Mapped[str] = mapped_column(String)
     
     
-    friends: Mapped[str] = mapped_column(String) #store as a string of comma separated values
+    #friends: Mapped[str] = mapped_column(String) #store as a string of comma separated values
+    friends = []
+    friendRequests = []
 
         
     

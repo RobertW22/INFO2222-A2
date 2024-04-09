@@ -57,4 +57,4 @@ Since this app uses cookies, you can't open it in separate tabs to test multiple
 ## Python Dependencies
 - Template Engine: Jinja
 - Database ORM: SQL Alchemy (use SQLite instead if you are an SQL master)
-- Flask Socket.io
+- Flask Socket.iol
