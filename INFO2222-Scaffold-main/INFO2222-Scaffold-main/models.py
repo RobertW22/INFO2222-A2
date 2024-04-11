@@ -45,6 +45,7 @@ class User(Base):
     #friends: Mapped[str] = mapped_column(String) #store as a string of comma separated values
     friends = []
     friendRequests = []
+    salt = ""
 
         
     

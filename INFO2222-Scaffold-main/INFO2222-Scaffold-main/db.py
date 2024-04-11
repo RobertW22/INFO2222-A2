@@ -6,6 +6,7 @@ database file, containing all the logic to interface with the sql database
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from models import *
+import hashlib
 
 from pathlib import Path
 
@@ -75,12 +76,36 @@ def add_friend(current_user, friend_username):
 def sendFriendRequest(username,target):
 
     targetAccount = get_user(target)
-    print(target)
     
-    if not targetAccount:
+    
+    if not targetAccount or targetAccount == None or targetAccount == "":
         return "friend not found"
 
     targetAccount.friendRequests.append(username)
 
+
     #for testing
     return targetAccount.friendRequests
+
+def retieve_Friend_Requests(username):
+
+    user = get_user(username)
+
+    user.friendRequests.append("test")
+
+
+    print(user.friendRequests)
+    return user.friendRequests
+
+
+def hash_password(password, salt, username):
+
+    user = get_user(username)
+    user.salt = salt
+    
+    # Hash and salt the password
+    saltedPass = salt + password
+
+    hashedPassword = hashlib.sha256(saltedPass.encode()).hexdigest()
+
+    return hashedPassword

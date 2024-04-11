@@ -114,17 +114,20 @@
         <section id="friends_box"></section>
     
         <!-- Add friend bar -->
-        <section id="requestBar"></section>
+        <section id="requestBar">
+        
+        <ul>
+            <li>friend request 1</li>
+            {% for request in friend_requests %}
+                <li>{{ request }}</li>
+            {% endfor %}
+        
+        
+
+        </section>
     </div>
 
-
-    <section>
-        <p class="text">Add friend: </p>
-        <input id="friend_username" type="text" placeholder="Enter friend's username">
-        <button onclick="addFriend()">Add Friend</button>
-    </section>
-
-    <!-- Testing forms -->
+    <!-- Send Friend request forms [POST] -->
     <section>
     
         <form action="/add_friend" method="post">
@@ -201,19 +204,6 @@
     } 
 
 
-    function addFriend(){
-
-        // get inputfield
-        let friend_username = document.getElementById("friend_username).value;
-
-        if(!friendUsername.trim()){
-            alert("Please enter a valid username");
-            return;
-        }
-
-
-        
-    }
 
     // we emit a join room event to the server to join a room
     function join_room() {

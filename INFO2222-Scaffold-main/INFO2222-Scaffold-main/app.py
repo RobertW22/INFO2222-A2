@@ -22,6 +22,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_hex()
 socketio = SocketIO(app)
 
+
+
 # don't remove this!!
 import socket_routes
 
@@ -33,6 +35,7 @@ def index():
 # login page
 @app.route("/login")
 def login():    
+    
     return render_template("login.jinja")
 
 # handles a post request when the user clicks the log in button
@@ -44,7 +47,7 @@ def login_user():
     username = request.json.get("username")
     password = request.json.get("password")
 
-    
+    # Need to check hash pass here insted    
 
     user =  db.get_user(username)
     if user is None:
@@ -54,6 +57,7 @@ def login_user():
         return "Error: Password does not match!"
     
     session['username'] = username
+
 
     return url_for('home', username=request.json.get("username"))
 
@@ -71,7 +75,14 @@ def signup_user():
     password = request.json.get("password")
 
     if db.get_user(username) is None:
-        db.insert_user(username, password)
+
+        # HASH AND SALT PASSWORD
+        # Generate a random salt
+        salt = secrets.token_hex(16)    
+        hashedPassword = db.hash_password(password,salt, username)
+
+        db.insert_user(username, hashedPassword)
+    
         return url_for('home', username=username)
     return "Error: User already exists!"
 
@@ -85,10 +96,22 @@ def page_not_found(_):
 def home():
     if request.args.get("username") is None:
         abort(404)
-    return render_template("home.jinja", username=request.args.get("username"))
+
+    print("IT WORKSKJDJDJDJSAOIDHUFHEWUIH")
+    currentUserName = request.args.get("username")
+    
+    
+    friend_requests = db.retieve_Friend_Requests(currentUserName)
 
 
 
+    
+    return render_template("home.jinja", username=request.args.get("username"), friend_requests=friend_requests)
+
+
+
+
+# HERE THE FRIEND REQUESTS ARE HANDLED
 @app.route("/add_friend", methods=["POST"])
 def add_Friend():
     
@@ -106,11 +129,27 @@ def add_Friend():
     print(db.sendFriendRequest(username,friendsName))
 
     
-    return render_template("home.jinja")
+    return redirect(url_for('home', username=username))
 
 
 
     # IT WORKS! but I need to maybe add a sent requests box
+
+
+#DISPLAYING FRIEND REQUESTS
+@app.route('/home')
+def loadFriendRequests():
+
+    print("IT WORKSKJDJDJDJSAOIDHUFHEWUIH")
+    currentUserName = request.args.get("username")
+    
+    #WORKS BUT ITS ADDING ITSELF TO THE LIST must fix
+    
+    friend_requests = db.retieve_Friend_Requests(currentUserName)
+    return render_template('home.jinja',username=currentUserName, friend_requests=friend_requests)
+
+
+
 
 if __name__ == '__main__':
     socketio.run(app, ssl_context=('/usr/local/share/ca-certificates/myCA.crt', './certs/myCA.key'))
