@@ -12,7 +12,7 @@ or use SQLite, if you're not into fancy ORMs (but be mindful of Injection attack
 
 from sqlalchemy import String, table, Column, Integer, ForeignKey, Table
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from typing import Dict
+from typing import Dict, List
 
 
 
@@ -41,11 +41,16 @@ class User(Base):
     username: Mapped[str] = mapped_column(String, primary_key=True)
     password: Mapped[str] = mapped_column(String)
     
+    salt: Mapped[str] = mapped_column(String)
     
     #friends: Mapped[str] = mapped_column(String) #store as a string of comma separated values
-    friends = []
-    friendRequests = []
-    salt = ""
+    #friends = []
+    #friendRequests = []
+    #salt = ""
+
+    friends: List[str] = []
+    friendRequests: List[str] = []
+    
 
         
     

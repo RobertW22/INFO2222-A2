@@ -23,9 +23,9 @@ engine = create_engine("sqlite:///database/main.db", echo=False)
 Base.metadata.create_all(engine)
 
 # inserts a user to the database
-def insert_user(username: str, password: str):
+def insert_user(username: str, password: str, salt: str):
     with Session(engine) as session:
-        user = User(username=username, password=password)
+        user = User(username=username, password=password, salt=salt)
         session.add(user)
         session.commit()
 
@@ -72,7 +72,7 @@ def add_friend(current_user, friend_username):
         session.commit()
 
 
-    
+# Send a friend request to a user 
 def sendFriendRequest(username,target):
 
     targetAccount = get_user(target)
@@ -87,25 +87,35 @@ def sendFriendRequest(username,target):
     #for testing
     return targetAccount.friendRequests
 
+# Simply returns the friend requests of a user and displays on the HTML page
 def retieve_Friend_Requests(username):
 
     user = get_user(username)
-
-    user.friendRequests.append("test")
-
 
     print(user.friendRequests)
     return user.friendRequests
 
 
-def hash_password(password, salt, username):
+# Used for registering
+def hash_password(password, salt):
 
-    user = get_user(username)
-    user.salt = salt
-    
     # Hash and salt the password
     saltedPass = salt + password
 
     hashedPassword = hashlib.sha256(saltedPass.encode()).hexdigest()
 
     return hashedPassword
+
+# Used for logging in
+def check_hashedpassword(username, password):
+    user = get_user(username)
+
+    saltedPass = user.salt + password
+    hashedPassword = hashlib.sha256(saltedPass.encode()).hexdigest()
+
+    return hashedPassword
+
+def add_salt(username, salt):
+    user = get_user(username)
+    user.salt = salt
+

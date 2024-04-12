@@ -47,12 +47,19 @@ def login_user():
     username = request.json.get("username")
     password = request.json.get("password")
 
+
+    
+
     # Need to check hash pass here insted    
 
     user =  db.get_user(username)
     if user is None:
         return "Error: User does not exist!"
 
+    print("salt: " + user.salt)
+    
+    password = db.hash_password(password,user.salt)
+    
     if user.password != password:
         return "Error: Password does not match!"
     
@@ -79,9 +86,16 @@ def signup_user():
         # HASH AND SALT PASSWORD
         # Generate a random salt
         salt = secrets.token_hex(16)    
-        hashedPassword = db.hash_password(password,salt, username)
+        hashedPassword = db.hash_password(password,salt)
 
-        db.insert_user(username, hashedPassword)
+        
+
+        db.insert_user(username, hashedPassword,salt)
+
+        user = db.get_user(username)
+        
+
+        print("salt: " + user.salt)
     
         return url_for('home', username=username)
     return "Error: User already exists!"
@@ -102,9 +116,6 @@ def home():
     
     
     friend_requests = db.retieve_Friend_Requests(currentUserName)
-
-
-
     
     return render_template("home.jinja", username=request.args.get("username"), friend_requests=friend_requests)
 
@@ -129,24 +140,14 @@ def add_Friend():
     print(db.sendFriendRequest(username,friendsName))
 
     
-    return redirect(url_for('home', username=username))
+    return render_template("home.jinja", username=request.args.get("username"))
 
 
 
     # IT WORKS! but I need to maybe add a sent requests box
 
 
-#DISPLAYING FRIEND REQUESTS
-@app.route('/home')
-def loadFriendRequests():
 
-    print("IT WORKSKJDJDJDJSAOIDHUFHEWUIH")
-    currentUserName = request.args.get("username")
-    
-    #WORKS BUT ITS ADDING ITSELF TO THE LIST must fix
-    
-    friend_requests = db.retieve_Friend_Requests(currentUserName)
-    return render_template('home.jinja',username=currentUserName, friend_requests=friend_requests)
 
 
 

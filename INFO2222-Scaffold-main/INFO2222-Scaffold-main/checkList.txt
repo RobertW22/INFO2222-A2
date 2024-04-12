@@ -1,0 +1,2 @@
+Passwords hashed and salted (6 marks) - DONE  [held in @app.route("/signup/user", methods=["POST"])]
+Display friend requests and accept 
