@@ -98,14 +98,18 @@ def retieve_Friend_Requests(username):
     return user.friendRequests
 
 
-def hash_password(password, salt, username):
+def hash_password(password, salt):
 
-    user = get_user(username)
-    user.salt = salt
+    # user = get_user(username)
+    # user.salt = salt
     
-    # Hash and salt the password
-    saltedPass = salt + password
+    # # Hash and salt the password
+    # saltedPass = salt + password
 
-    hashedPassword = hashlib.sha256(saltedPass.encode()).hexdigest()
+    # hashedPassword = hashlib.sha256(saltedPass.encode()).hexdigest()
+
+    # Hash the password using the salt
+    hashedPassword = hashlib.sha256((password + salt).encode()).hexdigest()
+    return hashedPassword
 
     return hashedPassword

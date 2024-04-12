@@ -79,7 +79,7 @@ def signup_user():
         # HASH AND SALT PASSWORD
         # Generate a random salt
         salt = secrets.token_hex(16)    
-        hashedPassword = db.hash_password(password,salt, username)
+        hashedPassword = db.hash_password(password, salt)
 
         db.insert_user(username, hashedPassword)
     
@@ -152,7 +152,8 @@ def loadFriendRequests():
 
 
 if __name__ == '__main__':
-    socketio.run(app, ssl_context=('/usr/local/share/ca-certificates/myCA.crt', './certs/myCA.key'))
+    socketio.run(app)
     
+    #, ssl_context=('/usr/local/share/ca-certificates/myCA.crt', './certs/myCA.key')
 
     #crt file 
