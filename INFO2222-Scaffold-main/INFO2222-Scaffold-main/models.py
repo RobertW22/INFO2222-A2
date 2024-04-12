@@ -41,16 +41,20 @@ class User(Base):
     username: Mapped[str] = mapped_column(String, primary_key=True)
     password: Mapped[str] = mapped_column(String)
     
+    # Salt column addted to store salt for password hashing (String type)
+    salt: Mapped[str] = mapped_column(String)
     
     #friends: Mapped[str] = mapped_column(String) #store as a string of comma separated values
     friends = []
     friendRequests = []
-    salt = ""
 
-        
-    
     # adding FRIENDS
     #friends: Mapped[str] = mapped_column(String)
+
+    # Should we store friends and friend requests like this?
+
+    # friends: Mapped[list] = mapped_column(default=[])
+    # friendRequests: Mapped[list] = mapped_column(default=[])    
     
 
 # stateful counter used to generate the room id

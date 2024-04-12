@@ -22,19 +22,17 @@ engine = create_engine("sqlite:///database/main.db", echo=False)
 # initializes the database
 Base.metadata.create_all(engine)
 
-# inserts a user to the database
-def insert_user(username: str, password: str):
+# inserts a user to the database - updated to include salt
+def insert_user(username: str, password: str, salt: str):
     with Session(engine) as session:
-        user = User(username=username, password=password)
+        user = User(username=username, password=password, salt=salt)
         session.add(user)
         session.commit()
 
 # gets a user from the database
 def get_user(username: str):
     with Session(engine) as session:
-        return session.get(User, username)
-    
-
+        return session.query(User).filter_by(username=username).first()
 
 
 #get request to get all the friends of a user
@@ -99,17 +97,5 @@ def retieve_Friend_Requests(username):
 
 
 def hash_password(password, salt):
-
-    # user = get_user(username)
-    # user.salt = salt
-    
-    # # Hash and salt the password
-    # saltedPass = salt + password
-
-    # hashedPassword = hashlib.sha256(saltedPass.encode()).hexdigest()
-
-    # Hash the password using the salt
     hashedPassword = hashlib.sha256((password + salt).encode()).hexdigest()
-    return hashedPassword
-
     return hashedPassword

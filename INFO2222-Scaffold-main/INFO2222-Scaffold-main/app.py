@@ -47,19 +47,23 @@ def login_user():
     username = request.json.get("username")
     password = request.json.get("password")
 
-    # Need to check hash pass here insted    
-
     user =  db.get_user(username)
     if user is None:
         return "Error: User does not exist!"
 
-    if user.password != password:
+    # Get the stored hashed password and salt from user object
+    stored_hashed_password = user.password
+    stored_salt = user.salt
+
+    # Hash entered password using stored salt
+    entered_hashed_password = db.hash_password(password, stored_salt)
+    
+    if stored_hashed_password != entered_hashed_password:
         return "Error: Password does not match!"
     
     session['username'] = username
 
-
-    return url_for('home', username=request.json.get("username"))
+    return url_for('home', username=username)
 
 # handles a get request to the signup page
 @app.route("/signup")
@@ -81,7 +85,7 @@ def signup_user():
         salt = secrets.token_hex(16)    
         hashedPassword = db.hash_password(password, salt)
 
-        db.insert_user(username, hashedPassword)
+        db.insert_user(username, hashedPassword, salt)
     
         return url_for('home', username=username)
     return "Error: User already exists!"
