@@ -21,34 +21,50 @@
 
     .container {
         display: flex;
-        
     }
-
     
-    #friends_box {
-        border: 1px solid black; 
-        height: 400px; 
-        width: 200px; 
+    .list-section {
+        border: 1px solid black;
+        height: 400px;
+        width: 200px;
         overflow: auto;
         padding: 2px;
+        margin-right: 20px;
     }
 
-    #requestBar {
-        margin-left: 40px; 
-        border: 1px solid black; 
-        height: 300px; 
-        width: 200px; 
-        overflow: auto;
-        padding: 2px;
+    .list-section h2 {
+        margin-top: 0;
+        padding: 5px;
     }
 
-    #friendRequestTitle {
-        margin-left: 120px;
+    .list-section ul {
+        list-style-type: none;
+        padding: 5px;
+    }
+
+    .list-section li {
+        margin-bottom: 5px;
     }
 
     .text  {
         margin-top: 2px;
         margin-bottom: 2px;
+    }
+
+    .status {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+
+    .online {
+        background-color: green;
+    }
+
+    .offline {
+        background-color: gray;
     }
 
 </style>
@@ -87,56 +103,46 @@
 
     <!-- Starting the friends list making here -->
 
+    <!-- Friends List and Friend Requests -->
+    <br>
 
     <div class="container">
-        
-        <section>
+        <!-- Friends List -->
+        <section class="list-section">
             <h2>Friends List</h2>
-            <ul>
+            <ul id="friends-list">
                 {% for friend in friends %}
-                    <li>{{ friend }}</li>
+                <li>
+                    <span class="status offline" id="status-{{ friend }}"></span>
+                    <a href="#" onclick="openChatroom('{{ friend }}')">{{ friend }}</a>
+                </li>
                 {% endfor %}
             </ul>
         </section>
-        
-        <section id="friendRequestTitle">
+    
+        <!-- Friend Requests -->
+        <section class="list-section">
             <h2>Friend Requests</h2>
-        </section>
-    </div>
-    
-
-
-
-
-    <!-- Add friend box -->
-    <div class="container">
-        
-        <section id="friends_box"></section>
-    
-        <!-- Add friend bar -->
-        <section id="requestBar">
-        
-        <ul>
-            <li>friend request 1</li>
-            {% for request in friend_requests %}
+            <ul>
+                {% for request in friend_requests %}
                 <li>{{ request }}</li>
-            {% endfor %}
-        
-        
-
+                {% endfor %}
+            </ul>
         </section>
     </div>
+    
 
     <!-- Send Friend request forms [POST] -->
     <section>
     
         <form action="/add_friend" method="post">
-        
+    
+        <!-- <form id="add-friend-form"> -->
+            
             <input type="hidden" name="username" value="{{ username }}">
             <p class="text">Add friend:</p>
-
-            <input type="text" name="friend_username" placeholder="Enter friends's Username here">
-            <input type="submit" value="Add Friend">
+            <input type="text" name="friend_username" placeholder="username">
+            <input type="submit" value="Add">
         </form>
     
     </section>
@@ -181,7 +187,7 @@
         $("#input_box").show();
         room_id = parseInt(Cookies.get("room_id"));
     })
-    
+
     // Here's the Socket IO part of the code
     // things get a bit complicated here so brace yourselves :P
     let username = "{{ username }}";
@@ -195,6 +201,14 @@
     socket.on("incoming", (msg, color="black") => {
         add_message(msg, color);
     })
+
+    socket.on("user_connected", (username) => {
+        $(`#status-${username}`).removeClass("offline").addClass("online");
+    });
+
+    socket.on("user_disconnected", (username) => {
+        $(`#status-${username}`).removeClass("online").addClass("offline");
+    });
     
     // we'll send the message to the server by emitting a "send" event
     function send() {
@@ -203,12 +217,15 @@
         socket.emit("send", username, message, room_id);  
     } 
 
-
-
     // we emit a join room event to the server to join a room
     function join_room() {
        
         let receiver = $("#receiver").val();
+
+        if (receiver === "") {
+            alert("Please enter a username to chat with.");
+            return;
+        }
 
         // pass in the receiver of our message to the server
         // as well as the current user's username
@@ -246,6 +263,12 @@
         let box = $("#message_box");
         let child = $(`<p style="color:${color}; margin: 0px;"></p>`).text(message);
         box.append(child);
+    }
+
+    // Function to open a chatroom when user clicks on a friend in friend list
+    function openChatroom(friend) {
+        $("#receiver").val(friend);
+        join_room();
     }
     
 </script>

@@ -23,6 +23,10 @@ room = Room()
 @socketio.on('connect')
 def connect():
     username = request.cookies.get("username")
+
+    # For user online status
+    emit("user_connected", username, broadcast=True)
+
     room_id = request.cookies.get("room_id")
     if room_id is None or username is None:
         return
@@ -36,6 +40,10 @@ def connect():
 @socketio.on('disconnect')
 def disconnect():
     username = request.cookies.get("username")
+    
+     # For user not online status
+    emit("user_disconnected", username, broadcast=True)
+
     room_id = request.cookies.get("room_id")
     if room_id is None or username is None:
         return

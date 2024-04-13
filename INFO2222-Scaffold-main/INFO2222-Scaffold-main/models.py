@@ -17,17 +17,18 @@ from typing import Dict
 
 
 
-
-
-
 # data models
 class Base(DeclarativeBase):
     pass
 
-
-
-
-
+# Define an association table named friends_association that establishes
+# many-to-many relationship between users
+friends_association_table = Table(
+    "friends_association",
+    Base.metadata,
+    Column("user_id", ForeignKey("user.username"), primary_key=True),
+    Column("friend_id", ForeignKey("user.username"), primary_key=True)
+)
 
 # model to store user information
 class User(Base):
@@ -45,17 +46,20 @@ class User(Base):
     salt: Mapped[str] = mapped_column(String)
     
     #friends: Mapped[str] = mapped_column(String) #store as a string of comma separated values
-    friends = []
+    # friends = []
     friendRequests = []
 
     # adding FRIENDS
     #friends: Mapped[str] = mapped_column(String)
 
-    # Should we store friends and friend requests like this?
-
-    # friends: Mapped[list] = mapped_column(default=[])
-    # friendRequests: Mapped[list] = mapped_column(default=[])    
-    
+    # User model is target of relationship which means users can be friends with other users
+    # Secondary parameter is set to friends_association_table to define association table for relationship
+    # Backref parameter is set to "friend_of" to define reverse relationship
+    friends = relationship("User", 
+                           secondary=friends_association_table, 
+                           primaryjoin=username == friends_association_table.c.user_id,
+                           secondaryjoin=username == friends_association_table.c.friend_id,
+                           backref="friend_of")
 
 # stateful counter used to generate the room id
 class Counter():

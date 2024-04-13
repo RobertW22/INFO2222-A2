@@ -4,7 +4,7 @@ this is where you'll find all of the get/post request handlers
 the socket event handlers are inside of socket_routes.py
 '''
 
-from flask import Flask, render_template, request, abort, url_for, session, redirect
+from flask import Flask, jsonify, render_template, request, abort, url_for, session, redirect
 from flask_socketio import SocketIO
 import db
 import secrets
@@ -106,11 +106,12 @@ def home():
     
     
     friend_requests = db.retieve_Friend_Requests(currentUserName)
-
+    
+    friends = db.get_friends(currentUserName)
 
 
     
-    return render_template("home.jinja", username=request.args.get("username"), friend_requests=friend_requests)
+    return render_template("home.jinja", username=request.args.get("username"), friend_requests=friend_requests,  friends=friends)
 
 
 
@@ -125,17 +126,18 @@ def add_Friend():
     #print(username)
     #print(friendsName)
 
-
     #username = request.json.get("username")
     #friendsName = request.json.get("friendUsername")
 
-    # Print returned friend request list
+    # Print returned friend request list    
     print(db.sendFriendRequest(username,friendsName))
 
+    # db.sendFriendRequest(username, friendsName)
+    # friends = db.get_friends(username)
     
     return redirect(url_for('home', username=username))
 
-
+    # return jsonify(friends=friends)
 
     # IT WORKS! but I need to maybe add a sent requests box
 
