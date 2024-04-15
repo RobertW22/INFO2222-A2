@@ -42,17 +42,15 @@ class User(Base):
     password: Mapped[str] = mapped_column(String)
     
     salt: Mapped[str] = mapped_column(String)
-    
-    #friends: Mapped[str] = mapped_column(String) #store as a string of comma separated values
-    #friends = []
-    #friendRequests = []
-    #salt = ""
 
-    friends: List[str] = []
-    friendRequests: List[str] = []
+    friends = Column(String, default="")
+    friendRequests = Column(String, default="")
     
+    #friends: Mapped[str] = mapped_column(String)
+    #friendRequests: Mapped[str] = mapped_column(String)
 
-        
+
+
     
     # adding FRIENDS
     #friends: Mapped[str] = mapped_column(String)
@@ -62,6 +60,7 @@ class User(Base):
 class Counter():
     def __init__(self):
         self.counter = 0
+
     
     def get(self):
         self.counter += 1

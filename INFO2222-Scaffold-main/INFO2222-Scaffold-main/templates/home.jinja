@@ -91,16 +91,12 @@
     <div class="container">
         
         <section>
-            <h2>Friends List</h2>
-            <ul>
-                {% for friend in friends %}
-                    <li>{{ friend }}</li>
-                {% endfor %}
-            </ul>
+            <h2>Friend List</h2>
         </section>
         
         <section id="friendRequestTitle">
             <h2>Friend Requests</h2>
+            
         </section>
     </div>
     
@@ -111,15 +107,34 @@
     <!-- Add friend box -->
     <div class="container">
         
-        <section id="friends_box"></section>
+        <section id="friends_box">
+        
+            <ul>
+                {% for friend in friends %}
+                    <li>{{ friend }}</li>
+                {% endfor %}
+
+            <ul>
+        
+        
+        </section>
     
         <!-- Add friend bar -->
         <section id="requestBar">
         
         <ul>
-            <li>friend request 1</li>
             {% for request in friend_requests %}
-                <li>{{ request }}</li>
+                <li>{{ request }}
+                        <! -- Accept friend request form -->
+                        <form action="/accept_friend_request" method="post">
+                        <input type="hidden" name="username" value="{{ username }}">
+                        <input type="hidden" name="friend_username" value="{{ request }}">
+                        <button type="submit">Accept</button>
+                    </form>
+                </li>
+
+
+
             {% endfor %}
         
         
@@ -193,15 +208,33 @@
 
     // an incoming message arrives, we'll add the message to the message box
     socket.on("incoming", (msg, color="black") => {
+        
         add_message(msg, color);
+
+
     })
     
     // we'll send the message to the server by emitting a "send" event
+    // WHen sending the MAC we send the message, mac , and the key
     function send() {
         let message = $("#message").val();
+
+
         $("#message").val("");
         socket.emit("send", username, message, room_id);  
     } 
+
+    // implent MAC 
+    function encryptMessage(message, key){
+
+        const hmac = crypto.createHmac('sha256', key);
+        hmac.update(message);
+        return hmac.digest('hex');
+
+    }
+
+    
+
 
 
 
@@ -243,6 +276,7 @@
     // function to add a message to the message box
     // called when an incoming message has reached a client
     function add_message(message, color) {
+
         let box = $("#message_box");
         let child = $(`<p style="color:${color}; margin: 0px;"></p>`).text(message);
         box.append(child);

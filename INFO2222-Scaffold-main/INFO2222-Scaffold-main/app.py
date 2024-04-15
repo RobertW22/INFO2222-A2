@@ -116,8 +116,15 @@ def home():
     
     
     friend_requests = db.retieve_Friend_Requests(currentUserName)
+    friends_list = db.get_friends(currentUserName)
+    print("Friend Requests")
+    print(friend_requests)
+    print("Friends List")
+    print(friends_list)
+
+    print("Current user = " + currentUserName)
     
-    return render_template("home.jinja", username=request.args.get("username"), friend_requests=friend_requests)
+    return render_template("home.jinja", username=request.args.get("username"), friend_requests=friend_requests, friends=friends_list)
 
 
 
@@ -129,24 +136,32 @@ def add_Friend():
     username = request.form.get("username")
     friendsName = request.form.get("friend_username")
 
-    #print(username)
-    #print(friendsName)
-
-
-    #username = request.json.get("username")
-    #friendsName = request.json.get("friendUsername")
-
+    print("Username:" +username)
+    print("Friends name:" +friendsName)
     # Print returned friend request list
     print(db.sendFriendRequest(username,friendsName))
+    friend_requests = db.retieve_Friend_Requests(friendsName)
 
+    print(friend_requests)
     
-    return render_template("home.jinja", username=request.args.get("username"))
+    return redirect(url_for('home', username=username, friend_requests=friend_requests))
+    
 
 
 
     # IT WORKS! but I need to maybe add a sent requests box
 
-
+@app.route("/accept_friend_request", methods=["POST"])
+def accept_friend_request():
+    username = request.form.get("username")
+    friend = request.form.get("friend_username")
+    print("Username:" +username)
+    print("Friends name:" +friend)
+    # Print returned friend request list
+    print(db.acceptFriendRequest(username, friend))
+    friend_requests = db.retieve_Friend_Requests(username)
+    print(friend_requests)
+    return redirect(url_for('home', username=username, friend_requests=friend_requests))
 
 
 

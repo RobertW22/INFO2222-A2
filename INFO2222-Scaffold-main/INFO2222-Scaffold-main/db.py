@@ -39,61 +39,90 @@ def get_user(username: str):
 
 #get request to get all the friends of a user
 #there is some fuction that gets posts requests ..
-def add_friend(current_user, friend_username):
+
+
+
+
+
+def sendFriendRequest(username,target):
+
+
     with Session(engine) as session:
-        # Query user object from the database
-        user = session.get(User, current_user)
-        friend = session.get(User, friend_username)
-        
-        if not user:
-            raise ValueError("User not found")
-        
-        if not friend:
-            raise ValueError("Friend not found")
-        
-        # Add friend to user's friends list
-        if user.friends:
+        targetAccount = session.get(User, target)
+        if not targetAccount:
+            return "friend not found"
 
-            if friend_username in user.friends:
-                return "Friend already added"
-            else:
-                user.friends.append(friend_username)
-        
 
+        #add test friends
         
-        # Add user to friend's friends list (bidirectional)
-        if friend.friends:
-            if current_user in friend.friends:
-                return "Friend already added"
-            else:
-                friend.friends.append(current_user)
-        
+        if targetAccount.friendRequests == "":
+            targetAccount.friendRequests = username
+        else:
+            targetAccount.friendRequests = targetAccount.friendRequests + "," + username
 
+
+        returnList = targetAccount.friendRequests.split(",")
         session.commit()
 
 
-# Send a friend request to a user 
-def sendFriendRequest(username,target):
+    return returnList
 
-    targetAccount = get_user(target)
-    
-    
-    if not targetAccount or targetAccount == None or targetAccount == "":
-        return "friend not found"
-
-    targetAccount.friendRequests.append(username)
-
-
-    #for testing
-    return targetAccount.friendRequests
 
 # Simply returns the friend requests of a user and displays on the HTML page
 def retieve_Friend_Requests(username):
 
-    user = get_user(username)
+    with Session(engine) as session:
+        user = session.get(User, username)
+        if not user:
+            return "User not found"
+        return user.friendRequests.split(",")
 
-    print(user.friendRequests)
-    return user.friendRequests
+def get_friends(username):
+    with Session(engine) as session:
+        user = session.get(User, username)
+        if not user:
+            return "User not found"
+        return user.friends.split(",")
+  
+def acceptFriendRequest(username, friendName):
+    with Session(engine) as session:
+
+        user = session.get(User, username)
+        friend = session.get(User, friendName)
+
+        if not user or not friend:
+            return "User or friend not found"
+        
+        # Add the friend to the user's friend list
+        if user.friends == "":
+            user.friends = friendName
+        else:
+            user.friends = user.friends + "," + friendName
+
+        # Add the user to the friend's friend list
+        if friend.friends == "":
+            friend.friends = username
+        else:
+            friend.friends = friend.friends + "," + username
+
+
+        # later to do remove from sent friends list
+
+        # Remove the friend request
+        friendRequests = user.friendRequests.split(",")
+        friendRequests.remove(friendName)
+
+        user.friendRequests = ",".join(friendRequests)
+
+        session.commit()
+        
+        return user.friends.split(",")
+
+    
+    
+    
+    
+    
 
 
 # Used for registering
