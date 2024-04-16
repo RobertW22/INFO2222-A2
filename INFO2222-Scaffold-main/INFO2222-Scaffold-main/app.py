@@ -186,7 +186,7 @@ def reject_friend_request():
 
 
 if __name__ == '__main__':
-    socketio.run(app, ssl_context=('./certs/localhostServer.crt', './certs/localhostServer.key'))
+    socketio.run(app, ssl_context=('./certs/newCerts2/localhostServer.crt', './certs/newCerts2/localhostServer.key'))
     
     #/usr/local/share/ca-certificates/myCA.crt'
 
