@@ -42,8 +42,21 @@
         padding: 2px;
     }
 
+    #requestSentBar {
+        margin-left: 40px; 
+        border: 1px solid black; 
+        height: 300px; 
+        width: 200px; 
+        overflow: auto;
+        padding: 2px;
+    }
+
     #friendRequestTitle {
-        margin-left: 120px;
+        margin-left: 130px;
+    }
+
+    #friendRequestSentTitle {
+        margin-left: 80px;
     }
 
     .text  {
@@ -98,6 +111,10 @@
             <h2>Friend Requests</h2>
             
         </section>
+
+        <section id="friendRequestSentTitle">
+            <h2>Friend Requests Sent</h2>
+        </section>
     </div>
     
 
@@ -126,11 +143,19 @@
             {% for request in friend_requests %}
                 <li>{{ request }}
                         <! -- Accept friend request form -->
-                        <form action="/accept_friend_request" method="post">
+                    <form action="/accept_friend_request" method="post">
                         <input type="hidden" name="username" value="{{ username }}">
                         <input type="hidden" name="friend_username" value="{{ request }}">
                         <button type="submit">Accept</button>
                     </form>
+
+                    <!-- Reject friend request form -->
+                    <form action="/reject_friend_request" method="post">
+                        <input type="hidden" name="username" value="{{ username }}">
+                        <input type="hidden" name="friend_username" value="{{ request }}">
+                        <button type="submit">Reject</button>
+                    </form>
+
                 </li>
 
 
@@ -140,6 +165,14 @@
         
 
         </section>
+
+        <!-- Friend request sent bar -->
+        <section id="requestSentBar">
+            <ul>
+                {% for request in friend_requests_sent %}
+                    <li>{{ request }}</li>
+                {% endfor %}
+            </ul>
     </div>
 
     <!-- Send Friend request forms [POST] -->

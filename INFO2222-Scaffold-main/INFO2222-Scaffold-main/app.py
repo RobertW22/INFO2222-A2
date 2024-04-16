@@ -81,6 +81,10 @@ def signup_user():
     username = request.json.get("username")
     password = request.json.get("password")
 
+    if db.validPassword(password) == False:
+        return "Error: Password must be at least 8 characters long and contain at least one uppercase letter and one special character"
+
+
     if db.get_user(username) is None:
 
         # HASH AND SALT PASSWORD
@@ -117,6 +121,7 @@ def home():
     
     friend_requests = db.retieve_Friend_Requests(currentUserName)
     friends_list = db.get_friends(currentUserName)
+    friend_requests_sent = db.retieve_Friend_Requests_Sent(currentUserName)
     print("Friend Requests")
     print(friend_requests)
     print("Friends List")
@@ -124,7 +129,7 @@ def home():
 
     print("Current user = " + currentUserName)
     
-    return render_template("home.jinja", username=request.args.get("username"), friend_requests=friend_requests, friends=friends_list)
+    return render_template("home.jinja", username=request.args.get("username"), friend_requests=friend_requests, friends=friends_list, friend_requests_sent=friend_requests_sent)
 
 
 
@@ -161,14 +166,29 @@ def accept_friend_request():
     print(db.acceptFriendRequest(username, friend))
     friend_requests = db.retieve_Friend_Requests(username)
     print(friend_requests)
+
+    return redirect(url_for('home', username=username, friend_requests=friend_requests))
+
+
+@app.route("/reject_friend_request", methods=["POST"])
+def reject_friend_request():
+    username = request.form.get("username")
+    friend = request.form.get("friend_username")
+    print("Username:" +username)
+    print("Friends name:" +friend)
+    # Print returned friend request list
+    print(db.rejectFriendRequest(username, friend))
+    friend_requests = db.retieve_Friend_Requests(username)
+    print(friend_requests)
+
     return redirect(url_for('home', username=username, friend_requests=friend_requests))
 
 
 
-
-
 if __name__ == '__main__':
-    socketio.run(app, ssl_context=('/usr/local/share/ca-certificates/myCA.crt', './certs/myCA.key'))
+    socketio.run(app, ssl_context=('./certs/localhostServer.crt', './certs/localhostServer.key'))
     
+    #/usr/local/share/ca-certificates/myCA.crt'
 
+    # pwd: /mnt/c/INFO2222/INFO2222-A2/INFO2222-Scaffold-main/INFO2222-Scaffold-main
     #crt file 

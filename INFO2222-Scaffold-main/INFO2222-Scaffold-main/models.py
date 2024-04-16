@@ -45,6 +45,7 @@ class User(Base):
 
     friends = Column(String, default="")
     friendRequests = Column(String, default="")
+    friendRequestsSent = Column(String, default="")
     
     #friends: Mapped[str] = mapped_column(String)
     #friendRequests: Mapped[str] = mapped_column(String)

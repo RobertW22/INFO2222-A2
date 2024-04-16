@@ -1,2 +1,5 @@
 Passwords hashed and salted (6 marks) - DONE  [held in @app.route("/signup/user", methods=["POST"])]
-Display friend requests and accept 
+Display friend requests - DONE
+Accept + deny friend requests - DONE
+display sent friend requests - DONE
+ensure secure pass on sign up - DONE

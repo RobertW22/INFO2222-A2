@@ -49,8 +49,18 @@ def sendFriendRequest(username,target):
 
     with Session(engine) as session:
         targetAccount = session.get(User, target)
+        userSender = session.get(User, username)
         if not targetAccount:
             return "friend not found"
+        
+        if target == username:
+            return "You can't send a friend request to yourself"
+        
+        if target in userSender.friends.split(","):
+            return "You are already friends with this user"
+        
+        if target in userSender.friendRequests.split(","):
+            return "You have already sent a friend request to this user"
 
 
         #add test friends
@@ -60,6 +70,11 @@ def sendFriendRequest(username,target):
         else:
             targetAccount.friendRequests = targetAccount.friendRequests + "," + username
 
+
+        if userSender.friendRequestsSent == "":
+            userSender.friendRequestsSent = target
+        else:
+            userSender.friendRequestsSent = userSender.friendRequestsSent + "," + target
 
         returnList = targetAccount.friendRequests.split(",")
         session.commit()
@@ -76,6 +91,15 @@ def retieve_Friend_Requests(username):
         if not user:
             return "User not found"
         return user.friendRequests.split(",")
+    
+def retieve_Friend_Requests_Sent(username):
+    
+        with Session(engine) as session:
+            user = session.get(User, username)
+            if not user:
+                return "User not found"
+            return user.friendRequestsSent.split(",")
+        
 
 def get_friends(username):
     with Session(engine) as session:
@@ -114,11 +138,40 @@ def acceptFriendRequest(username, friendName):
 
         user.friendRequests = ",".join(friendRequests)
 
+        # Remove the sent friend request
+        friendRequestsSent = friend.friendRequestsSent.split(",")
+        friendRequestsSent.remove(username)
+
+        friend.friendRequestsSent = ",".join(friendRequestsSent)
+
+
         session.commit()
         
         return user.friends.split(",")
 
-    
+def rejectFriendRequest(username, friendName):
+    with Session(engine) as session:
+        user = session.get(User, username)
+        friend = session.get(User, friendName)
+
+        if not user or not friend:
+            return "User or friend not found"
+
+        # Remove the friend request
+        friendRequests = user.friendRequests.split(",")
+        friendRequests.remove(friendName)
+
+        user.friendRequests = ",".join(friendRequests)
+
+        # Remove the sent friend request
+        friendRequestsSent = friend.friendRequestsSent.split(",")
+        friendRequestsSent.remove(username)
+
+        friend.friendRequestsSent = ",".join(friendRequestsSent)
+
+        session.commit()
+        
+        return user.friendRequests.split(",")
     
     
     
@@ -147,4 +200,19 @@ def check_hashedpassword(username, password):
 def add_salt(username, salt):
     user = get_user(username)
     user.salt = salt
+
+# checks password validity for min 8 chars, 1 digit, 1 uppercase
+def validPassword(password):
+    if len(password) < 8:
+        return False
+    
+    if not any(char.isupper() for char in password):
+        return False
+    
+    # specical character
+    specialChars = "!@#$%^&*()-+"
+    if not any(char in specialChars for char in password):
+        return False
+    
+    return True
 
