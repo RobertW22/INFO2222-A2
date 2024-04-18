@@ -47,6 +47,11 @@ def login_user():
     username = request.json.get("username")
     password = request.json.get("password")
 
+
+    
+
+    # Need to check hash pass here insted    
+
     user =  db.get_user(username)
     if user is None:
         return "Error: User does not exist!"
@@ -78,6 +83,10 @@ def signup_user():
     username = request.json.get("username")
     password = request.json.get("password")
 
+    if db.validPassword(password) == False:
+        return "Error: Password must be at least 8 characters long and contain at least one uppercase letter and one special character"
+
+
     if db.get_user(username) is None:
 
         # HASH AND SALT PASSWORD
@@ -85,7 +94,12 @@ def signup_user():
         salt = secrets.token_hex(16)    
         hashedPassword = db.hash_password(password, salt)
 
-        db.insert_user(username, hashedPassword, salt)
+        db.insert_user(username, hashedPassword,salt)
+
+        user = db.get_user(username)
+        
+
+        print("salt: " + user.salt)
     
         return url_for('home', username=username)
     return "Error: User already exists!"
@@ -106,11 +120,16 @@ def home():
     
     
     friend_requests = db.retieve_Friend_Requests(currentUserName)
+    friends_list = db.get_friends(currentUserName)
+    friend_requests_sent = db.retieve_Friend_Requests_Sent(currentUserName)
+    print("Friend Requests")
+    print(friend_requests)
+    print("Friends List")
+    print(friends_list)
 
-
-
+    print("Current user = " + currentUserName)
     
-    return render_template("home.jinja", username=request.args.get("username"), friend_requests=friend_requests)
+    return render_template("home.jinja", username=request.args.get("username"), friend_requests=friend_requests, friends=friends_list, friend_requests_sent=friend_requests_sent)
 
 
 
@@ -122,42 +141,54 @@ def add_Friend():
     username = request.form.get("username")
     friendsName = request.form.get("friend_username")
 
-    #print(username)
-    #print(friendsName)
-
-
-    #username = request.json.get("username")
-    #friendsName = request.json.get("friendUsername")
-
+    print("Username:" +username)
+    print("Friends name:" +friendsName)
     # Print returned friend request list
     print(db.sendFriendRequest(username,friendsName))
+    friend_requests = db.retieve_Friend_Requests(friendsName)
 
+    print(friend_requests)
     
-    return redirect(url_for('home', username=username))
+    return redirect(url_for('home', username=username, friend_requests=friend_requests))
+    
 
 
 
     # IT WORKS! but I need to maybe add a sent requests box
 
+@app.route("/accept_friend_request", methods=["POST"])
+def accept_friend_request():
+    username = request.form.get("username")
+    friend = request.form.get("friend_username")
+    print("Username:" +username)
+    print("Friends name:" +friend)
+    # Print returned friend request list
+    print(db.acceptFriendRequest(username, friend))
+    friend_requests = db.retieve_Friend_Requests(username)
+    print(friend_requests)
 
-#DISPLAYING FRIEND REQUESTS
-@app.route('/home')
-def loadFriendRequests():
+    return redirect(url_for('home', username=username, friend_requests=friend_requests))
 
-    print("IT WORKSKJDJDJDJSAOIDHUFHEWUIH")
-    currentUserName = request.args.get("username")
-    
-    #WORKS BUT ITS ADDING ITSELF TO THE LIST must fix
-    
-    friend_requests = db.retieve_Friend_Requests(currentUserName)
-    return render_template('home.jinja',username=currentUserName, friend_requests=friend_requests)
 
+@app.route("/reject_friend_request", methods=["POST"])
+def reject_friend_request():
+    username = request.form.get("username")
+    friend = request.form.get("friend_username")
+    print("Username:" +username)
+    print("Friends name:" +friend)
+    # Print returned friend request list
+    print(db.rejectFriendRequest(username, friend))
+    friend_requests = db.retieve_Friend_Requests(username)
+    print(friend_requests)
+
+    return redirect(url_for('home', username=username, friend_requests=friend_requests))
 
 
 
 if __name__ == '__main__':
-    socketio.run(app)
+    socketio.run(app, ssl_context=('./certs/newCerts2/localhostServer.crt', './certs/newCerts2/localhostServer.key'))
     
-    #, ssl_context=('/usr/local/share/ca-certificates/myCA.crt', './certs/myCA.key')
+    #/usr/local/share/ca-certificates/myCA.crt'
 
+    # pwd: /mnt/c/INFO2222/INFO2222-A2/INFO2222-Scaffold-main/INFO2222-Scaffold-main
     #crt file 
