@@ -8,7 +8,7 @@ from flask import Flask, jsonify, render_template, request, abort, url_for, sess
 from flask_socketio import SocketIO
 import db
 import secrets
-
+from crypto_utils import generate_rsa_keys
 
 # import logging
 
@@ -79,16 +79,18 @@ def signup_user():
     password = request.json.get("password")
 
     if db.get_user(username) is None:
+        # Generate RSA key pair
+        private_key, public_key = generate_rsa_keys()
 
-        # HASH AND SALT PASSWORD
         # Generate a random salt
         salt = secrets.token_hex(16)    
         hashedPassword = db.hash_password(password, salt)
 
-        db.insert_user(username, hashedPassword, salt)
+        db.insert_user(username, hashedPassword, salt, public_key.decode(), private_key.decode())
     
         return url_for('home', username=username)
     return "Error: User already exists!"
+
 
 # handler when a "404" error happens
 @app.errorhandler(404)
@@ -100,62 +102,7 @@ def page_not_found(_):
 def home():
     if request.args.get("username") is None:
         abort(404)
-
-    print("IT WORKSKJDJDJDJSAOIDHUFHEWUIH")
-    currentUserName = request.args.get("username")
-    
-    
-    friend_requests = db.retieve_Friend_Requests(currentUserName)
-    
-    friends = db.get_friends(currentUserName)
-
-
-    
-    return render_template("home.jinja", username=request.args.get("username"), friend_requests=friend_requests,  friends=friends)
-
-
-
-
-# HERE THE FRIEND REQUESTS ARE HANDLED
-@app.route("/add_friend", methods=["POST"])
-def add_Friend():
-    
-    username = request.form.get("username")
-    friendsName = request.form.get("friend_username")
-
-    #print(username)
-    #print(friendsName)
-
-    #username = request.json.get("username")
-    #friendsName = request.json.get("friendUsername")
-
-    # Print returned friend request list    
-    print(db.sendFriendRequest(username,friendsName))
-
-    # db.sendFriendRequest(username, friendsName)
-    # friends = db.get_friends(username)
-    
-    return redirect(url_for('home', username=username))
-
-    # return jsonify(friends=friends)
-
-    # IT WORKS! but I need to maybe add a sent requests box
-
-
-#DISPLAYING FRIEND REQUESTS
-@app.route('/home')
-def loadFriendRequests():
-
-    print("IT WORKSKJDJDJDJSAOIDHUFHEWUIH")
-    currentUserName = request.args.get("username")
-    
-    #WORKS BUT ITS ADDING ITSELF TO THE LIST must fix
-    
-    friend_requests = db.retieve_Friend_Requests(currentUserName)
-    return render_template('home.jinja',username=currentUserName, friend_requests=friend_requests)
-
-
-
+    return render_template("home.jinja", username=request.args.get("username"))
 
 if __name__ == '__main__':
     socketio.run(app)

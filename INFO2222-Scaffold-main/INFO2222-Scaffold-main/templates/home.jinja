@@ -6,68 +6,67 @@
 
 {% block content %} 
    <style>
-    nav {
-        border-bottom: 1px solid black;
-        overflow: auto
-    }
+        nav {
+            border-bottom: 1px solid black;
+            overflow: auto
+        }
 
-    #message_box {
-        border: 1px solid black; 
-        height: 400px; 
-        width: 800px; 
-        overflow: auto;
-        padding: 2px;
-    }
+        #message_box {
+            border: 1px solid black; 
+            height: 400px; 
+            width: 800px; 
+            overflow: auto;
+            padding: 2px;
+        }
 
-    .container {
-        display: flex;
-    }
-    
-    .list-section {
-        border: 1px solid black;
-        height: 400px;
-        width: 200px;
-        overflow: auto;
-        padding: 2px;
-        margin-right: 20px;
-    }
+        .container {
+            display: flex;
+        }
+        
+        .list-section {
+            border: 1px solid black;
+            height: 400px;
+            width: 200px;
+            overflow: auto;
+            padding: 2px;
+            margin-right: 20px;
+        }
 
-    .list-section h2 {
-        margin-top: 0;
-        padding: 5px;
-    }
+        .list-section h2 {
+            margin-top: 0;
+            padding: 5px;
+        }
 
-    .list-section ul {
-        list-style-type: none;
-        padding: 5px;
-    }
+        .list-section ul {
+            list-style-type: none;
+            padding: 5px;
+        }
 
-    .list-section li {
-        margin-bottom: 5px;
-    }
+        .list-section li {
+            margin-bottom: 5px;
+        }
 
-    .text  {
-        margin-top: 2px;
-        margin-bottom: 2px;
-    }
+        .text  {
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
 
-    .status {
-        display: inline-block;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        margin-right: 5px;
-    }
+        .status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
 
-    .online {
-        background-color: green;
-    }
+        .online {
+            background-color: green;
+        }
 
-    .offline {
-        background-color: gray;
-    }
-
-</style>
+        .offline {
+            background-color: gray;
+        }
+    </style>
 
 <!--Navbar, you'll see the username here-->
 <nav style="border-bottom: 1px solid black;">
@@ -94,14 +93,12 @@
 
     <!-- The (message) input box is set to display: none initially, 
     this means the input box is "invisible" initially-->
-    <section id="input_box" style="display: none" >
+    <section id="input_box" style="display: none">
         <p class="text">Message: </p>
         <input id="message" placeholder="message">
         <button onclick="send()">Send</button>
         <button onclick="leave()">Leave Room</button>
     </section>
-
-    <!-- Starting the friends list making here -->
 
     <!-- Friends List and Friend Requests -->
     <br>
@@ -130,27 +127,6 @@
             </ul>
         </section>
     </div>
-    
-
-    <!-- Send Friend request forms [POST] -->
-    <section>
-    
-        <form action="/add_friend" method="post">
-    
-        <!-- <form id="add-friend-form"> -->
-            
-            <input type="hidden" name="username" value="{{ username }}">
-            <p class="text">Add friend:</p>
-            <input type="text" name="friend_username" placeholder="username">
-            <input type="submit" value="Add">
-        </form>
-    
-    </section>
-        
-
-
-
-
 </main>
 
 <script src="/static/js/libs/socket.io.min.js"></script>
@@ -163,44 +139,62 @@
         if (e.key == "Enter") {
             send();
         }
-    })
+    });
 
     // when the user presses the enter key inside of the "receiver box"
     // the user joins a (socket) room
-     $("#receiver").on("keyup", (e) => {
+    $("#receiver").on("keyup", (e) => {
         if (e.key == "Enter") {
             join_room();
         }
-    })
+    });
 
-
-    $(document).ready(() => {
-        // room_id is undefined if the user hasn't joined a room
-        // we early return in this case
-        if (Cookies.get("room_id") == undefined) {
-            return;
-        }
-
-        // the user has already joined an existing room
-        // we'll display the message box, instead of the "Chat with: " box
-        $("#chat_box").hide();
-        $("#input_box").show();
-        room_id = parseInt(Cookies.get("room_id"));
-    })
+    //$(document).ready(() => {
+    //    // Check if user has already joined a room
+    //    if (Cookies.get("room_id") == undefined) {
+    //        return;
+    //    }
+    //
+    //    // Display message box and hide "Chat with" box
+    //    $("#chat_box").hide();
+    //    $("#input_box").show();
+    //    room_id = parseInt(Cookies.get("room_id"));
+    //});
 
     // Here's the Socket IO part of the code
     // things get a bit complicated here so brace yourselves :P
     let username = "{{ username }}";
-
     Cookies.set('username', username);
 
     // initializes the socket
     const socket = io();
 
-    // an incoming message arrives, we'll add the message to the message box
-    socket.on("incoming", (msg, color="black") => {
-        add_message(msg, color);
-    })
+    socket.on("incoming", (data, color) => {
+        if (typeof data === "string") {
+            add_message(data, color);
+        } else if (Array.isArray(data) && data.length === 3) {
+            let [username, encrypted_message, mac] = data;
+            // Retrieve shared secret from localStorage
+            let sharedSecretKey = localStorage.getItem("sharedSecretKey");
+            
+            // Check if sharedSecretKey is not null or undefined
+            if (sharedSecretKey) {
+                // Verify message integrity
+                let isValid = verifyMAC(encrypted_message, mac, sharedSecretKey);
+                if (isValid) {
+                    // Decrypt message
+                    let decryptedMessage = decryptMessage(encrypted_message, privateKey);
+                    add_message(`${username}: ${decryptedMessage}`);
+                } else {
+                    add_message("Message integrity compromised!", "red");
+                }
+            } else {
+                // Handle the case when sharedSecretKey is null or undefined
+                console.error("Shared secret key is missing or invalid.");
+                add_message("Error: Unable to verify message integrity.", "red");
+            }
+        }
+    });
 
     socket.on("user_connected", (username) => {
         $(`#status-${username}`).removeClass("offline").addClass("online");
@@ -209,17 +203,60 @@
     socket.on("user_disconnected", (username) => {
         $(`#status-${username}`).removeClass("online").addClass("offline");
     });
-    
-    // we'll send the message to the server by emitting a "send" event
+
+    // Handle public_key_response event
+    socket.on('public_key_response', (receiverPublicKey) => {
+        console.log("Received public key:", receiverPublicKey);
+        console.log("Type of receiverPublicKey:", typeof receiverPublicKey);
+
+        if (typeof receiverPublicKey === 'string') {
+            console.error("Error receiving public key:", receiverPublicKey);
+            return;
+        }
+
+        // Format the public key
+        const formattedPublicKey = formatPublicKey(receiverPublicKey);
+        console.log("Formatted Public Key:", formattedPublicKey); // Debugging: Check if the public key is formatted correctly
+
+        // Retrieve the private key from localStorage
+        let privateKey = localStorage.getItem("privateKey");
+        console.log("Private Key:", privateKey); // Debugging: Check if the private key is retrieved correctly
+
+        // Retrieve the shared secret key from localStorage
+        let sharedSecretKey = localStorage.getItem("sharedSecretKey");
+        console.log("Shared Secret Key:", sharedSecretKey); // Debugging: Check if the shared secret key is retrieved correctly
+
+        // Encrypt the message using the formatted receiver's public key
+        let encryptedMessage = encryptMessage(message, formattedPublicKey);
+        console.log("Encrypted Message:", encryptedMessage); // Debugging: Check if the message is encrypted correctly
+
+        // Generate MAC using the shared secret key
+        let mac = generateMAC(encryptedMessage, sharedSecretKey);
+        console.log("MAC:", mac); // Debugging: Check if the MAC is generated correctly
+
+        console.log("Sending message:", {
+            username: username,
+            encryptedMessage: encryptedMessage,
+            mac: mac,
+            room_id: room_id
+        }); // Debugging: Log the data being sent
+
+        socket.emit("send", username, encryptedMessage, mac, room_id);
+    });
+
+    // Function to send a message
     function send() {
         let message = $("#message").val();
+        console.log("Message to be sent:", message); // Debugging: Check if the message is correct
         $("#message").val("");
-        socket.emit("send", username, message, room_id);  
-    } 
+        let receiver = $("#receiver").val();
 
-    // we emit a join room event to the server to join a room
+        // Request receiver's public key from server
+        socket.emit('request_public_key', receiver);
+    }
+
+    // Function to join a room
     function join_room() {
-       
         let receiver = $("#receiver").val();
 
         if (receiver === "") {
@@ -265,11 +302,56 @@
         box.append(child);
     }
 
+    // Function to format public key
+    function formatPublicKey(publicKey) {
+        // Remove newline characters and extra whitespace
+        publicKey = publicKey.replace(/\n/g, "").replace(/\s+/g, "");
+        // Insert newline characters every 64 characters
+        const formatted = publicKey.match(/.{1,64}/g).join("\n");
+        return `-----BEGIN PUBLIC KEY-----\n${formatted}\n-----END PUBLIC KEY-----`;
+    }
+
     // Function to open a chatroom when user clicks on a friend in friend list
     function openChatroom(friend) {
         $("#receiver").val(friend);
         join_room();
     }
+
+    // Function to encrypt a message
+    function encryptMessage(message, publicKey) {
+        const encrypt = new JSEncrypt();
+        encrypt.setPublicKey(publicKey);
+        const encryptedMessage = encrypt.encrypt(message);
+        return encryptedMessage;
+    }
+
+    // Function to generate a MAC
+    function generateMAC(message, secretKey) {
+        const mac = CryptoJS.HmacSHA256(message, secretKey);
+        return mac.toString(CryptoJS.enc.Hex);
+    }
     
+    // Function to verify a MAC
+    function verifyMAC(message, mac, secretKey) {
+        if (typeof secretKey !== 'string') {
+            console.error("Shared secret key must be a string");
+            return false;
+        }
+
+        const expectedMac = CryptoJS.HmacSHA256(message, secretKey).toString(CryptoJS.enc.Hex);
+        return mac === expectedMac;
+    }
+
+    // Function to decrypt a message
+    function decryptMessage(encryptedMessage, privateKey) {
+        const decrypt = new JSEncrypt();
+        decrypt.setPrivateKey(privateKey);
+        const decryptedMessage = decrypt.decrypt(encryptedMessage);
+        return decryptedMessage;
+    }
+
+    // Event listener for "join-room-btn" click event
+    document.getElementById('join-room-btn').addEventListener('click', join_room);
 </script>
+
 {% endblock %}
