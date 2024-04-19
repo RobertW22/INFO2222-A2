@@ -1,7 +1,7 @@
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Signature import pkcs1_15
-from Crypto.Hash import SHA256
+from Crypto.Hash import SHA256, HMAC
 from Crypto.Protocol.KDF import PBKDF2
 
 def generate_rsa_keys():
@@ -23,22 +23,26 @@ def decrypt_message(encrypted_message, private_key):
     return decrypted_message
 
 def generate_mac(message, secret_key):
-    hash_obj = SHA256.new(message)
-    signature = pkcs1_15.new(RSA.import_key(secret_key)).sign(hash_obj)
-    return signature
+    print("Secret Key (bytes) in generate_mac:", secret_key)
+    print("Message (bytes) in generate_mac:", message)
+    hmac = HMAC.new(secret_key, digestmod=SHA256)
+    hmac.update(message)
+    mac = hmac.digest()
+    print("Generated MAC (hex):", mac.hex())
+    return mac
 
-def verify_mac(message, signature, secret_key):
-    if isinstance(secret_key, bytes):
-        secret_key = secret_key.decode()
-    
-    if not isinstance(secret_key, str):
-        raise ValueError("Secret key must be a string")
-    
-    hash_obj = SHA256.new(message)
+def verify_mac(message, mac, secret_key):
+    print("Secret Key (bytes) in verify_mac:", secret_key)
+    print("Message (bytes) in verify_mac:", message)
+    print("MAC (bytes) in verify_mac:", mac)
+    hmac = HMAC.new(secret_key, digestmod=SHA256)
+    hmac.update(message)
     try:
-        pkcs1_15.new(RSA.import_key(secret_key)).verify(hash_obj, signature)
+        hmac.verify(mac)
+        print("MAC verification successful")
         return True
-    except (ValueError, TypeError):
+    except ValueError:
+        print("MAC verification failed")
         return False
 
 def generate_shared_secret(private_key, public_key):

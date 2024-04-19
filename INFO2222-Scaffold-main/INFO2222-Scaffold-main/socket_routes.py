@@ -67,10 +67,14 @@ def send(username, encrypted_message, mac, room_id):
         return
 
     shared_secret = bytes.fromhex(conversation.shared_secret)
+    print("Shared Secret (bytes):", shared_secret)
 
     # Verify message integrity
     message = encrypted_message.encode()
+    print("Message (bytes):", message)
+    print("MAC (hex):", mac)
     is_valid = verify_mac(message, bytes.fromhex(mac), shared_secret)
+
     if is_valid:
         print("Emitting 'incoming' event:", (username, encrypted_message, mac)) # Debugging: Log data being emitted
         emit("incoming", (username, encrypted_message, mac), to=room_id)

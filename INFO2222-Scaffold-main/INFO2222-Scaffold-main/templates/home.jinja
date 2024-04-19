@@ -268,17 +268,21 @@
             console.log("Response keys:", Object.keys(response));
             
             if (typeof response === "object" && response.room_id && response.receiver_public_key && response.shared_secret_key) {
-                let room_id = response.room_id;
+                //let room_id = response.room_id;
+                
                 let receiverPublicKey = response.receiver_public_key;
                 let sharedSecretKey = response.shared_secret_key;
                 // Store room_id and sharedSecretKey in localStorage
                 Cookies.set("room_id", room_id);
                 localStorage.setItem("sharedSecretKey", sharedSecretKey);
-                // Update room_id variable
+                
+                // Update the room_id variable
                 room_id = response.room_id;
+                
                 // Show input box and hide chat box
                 $("#chat_box").hide();
                 $("#input_box").show();
+
                 // Encrypt message using receiver's public key
                 // let encryptedMessage = encryptMessage(message, receiverPublicKey);
             } else {
@@ -307,6 +311,11 @@
 
     // Function to format public key
     function formatPublicKey(publicKey) {
+        // Check if the public key is already formatted
+        if (publicKey.includes("-----BEGIN PUBLIC KEY-----") && publicKey.includes("-----END PUBLIC KEY-----")) {
+            return publicKey;
+        }
+        
         // Remove newline characters and extra whitespace
         publicKey = publicKey.replace(/\n/g, "").replace(/\s+/g, "");
         // Insert newline characters every 64 characters
@@ -322,15 +331,22 @@
 
     // Function to encrypt a message
     function encryptMessage(message, publicKey) {
-        const encrypt = new JSEncrypt();
-        encrypt.setPublicKey(publicKey);
-        const encryptedMessage = encrypt.encrypt(message);
-        return encryptedMessage;
-    }
-
+        try {
+            const encrypt = new JSEncrypt();
+            encrypt.setPublicKey(publicKey);
+            const encryptedMessage = encrypt.encrypt(message);
+            return encryptedMessage;
+        } catch (error) {
+            console.error("Error encrypting message:", error);
+            return false;
+        }
+}
     // Function to generate a MAC
     function generateMAC(message, secretKey) {
+        console.log("Secret Key (hex) in generateMAC:", secretKey);
+        console.log("Message in generateMAC:", message);
         const mac = CryptoJS.HmacSHA256(message, secretKey);
+        console.log("Generated MAC (hex) in generateMAC:", mac.toString(CryptoJS.enc.Hex));
         return mac.toString(CryptoJS.enc.Hex);
     }
 
