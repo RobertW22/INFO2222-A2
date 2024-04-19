@@ -44,13 +44,6 @@ class User(Base):
     
     # Salt column addted to store salt for password hashing (String type)
     salt: Mapped[str] = mapped_column(String)
-    
-    #friends: Mapped[str] = mapped_column(String) #store as a string of comma separated values
-    # friends = []
-    friendRequests = []
-
-    # adding FRIENDS
-    #friends: Mapped[str] = mapped_column(String)
 
     # User model is target of relationship which means users can be friends with other users
     # Secondary parameter is set to friends_association_table to define association table for relationship
@@ -60,6 +53,21 @@ class User(Base):
                            primaryjoin=username == friends_association_table.c.user_id,
                            secondaryjoin=username == friends_association_table.c.friend_id,
                            backref="friend_of")
+    
+    # Fields for storing public and private keys
+    private_key: Mapped[str] = mapped_column(String)
+    public_key: Mapped[str] = mapped_column(String)
+
+class Conversation(Base):
+    __tablename__ = "conversation"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user1_id = Column(String, ForeignKey("user.username"), nullable=False)
+    user2_id = Column(String, ForeignKey("user.username"), nullable=False)
+    shared_secret = Column(String, nullable=False)
+
+    user1 = relationship("User", foreign_keys=[user1_id])
+    user2 = relationship("User", foreign_keys=[user2_id])
 
 # stateful counter used to generate the room id
 class Counter():

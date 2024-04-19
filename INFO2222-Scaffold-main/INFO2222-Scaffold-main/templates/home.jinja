@@ -1,77 +1,73 @@
-<!-- 
-    Here you'll find the main exhibit: the chat application code. Feel free to look around!
--->
+<!-- Here you'll find the main exhibit: the chat application code. Feel free to look around! -->
 {% extends 'base.jinja' %}
+{% block content %}
+<style>
+    nav {
+        border-bottom: 1px solid black;
+        overflow: auto
+    }
 
+    #message_box {
+        border: 1px solid black;
+        height: 400px;
+        width: 800px;
+        overflow: auto;
+        padding: 2px;
+    }
 
-{% block content %} 
-   <style>
-        nav {
-            border-bottom: 1px solid black;
-            overflow: auto
-        }
+    .container {
+        display: flex;
+    }
 
-        #message_box {
-            border: 1px solid black; 
-            height: 400px; 
-            width: 800px; 
-            overflow: auto;
-            padding: 2px;
-        }
+    .list-section {
+        border: 1px solid black;
+        height: 400px;
+        width: 200px;
+        overflow: auto;
+        padding: 2px;
+        margin-right: 20px;
+    }
 
-        .container {
-            display: flex;
-        }
-        
-        .list-section {
-            border: 1px solid black;
-            height: 400px;
-            width: 200px;
-            overflow: auto;
-            padding: 2px;
-            margin-right: 20px;
-        }
+    .list-section h2 {
+        margin-top: 0;
+        padding: 5px;
+    }
 
-        .list-section h2 {
-            margin-top: 0;
-            padding: 5px;
-        }
+    .list-section ul {
+        list-style-type: none;
+        padding: 5px;
+    }
 
-        .list-section ul {
-            list-style-type: none;
-            padding: 5px;
-        }
+    .list-section li {
+        margin-bottom: 5px;
+    }
 
-        .list-section li {
-            margin-bottom: 5px;
-        }
+    .text {
+        margin-top: 2px;
+        margin-bottom: 2px;
+    }
 
-        .text  {
-            margin-top: 2px;
-            margin-bottom: 2px;
-        }
+    .status {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
 
-        .status {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
+    .online {
+        background-color: green;
+    }
 
-        .online {
-            background-color: green;
-        }
-
-        .offline {
-            background-color: gray;
-        }
-    </style>
+    .offline {
+        background-color: gray;
+    }
+</style>
 
 <!--Navbar, you'll see the username here-->
 <nav style="border-bottom: 1px solid black;">
     <ol style="float: right">
-        <li style="display:inline-block">Username:  {{ username }} </li>
+        <li style="display:inline-block">Username: {{ username }}</li>
     </ol>
 </nav>
 
@@ -81,18 +77,15 @@
     <!-- The messages are displayed here -->
     <section id="message_box"></section>
 
-    <!-- These part ideally should be a form element, 
-    but I wrote this code a year ago and I don't want to break anything...-->
+    <!-- These part ideally should be a form element, but I wrote this code a year ago and I don't want to break anything...-->
     <section id="chat_box">
         <p class="text">Chat with: </p>
         <input id="receiver" placeholder="username">
-        <!-- MDN says its bad practice to use the onclick attribute,
-        but we're using it anyways coz its easy :)-->
-        <button onclick="join_room()">Chat</button>
+        <!-- MDN says its bad practice to use the onclick attribute, but we're using it anyways coz its easy :)-->
+        <button id="join-room-btn">Chat</button>
     </section>
 
-    <!-- The (message) input box is set to display: none initially, 
-    this means the input box is "invisible" initially-->
+    <!-- The (message) input box is set to display: none initially, this means the input box is "invisible" initially-->
     <section id="input_box" style="display: none">
         <p class="text">Message: </p>
         <input id="message" placeholder="message">
@@ -102,7 +95,6 @@
 
     <!-- Friends List and Friend Requests -->
     <br>
-
     <div class="container">
         <!-- Friends List -->
         <section class="list-section">
@@ -116,7 +108,7 @@
                 {% endfor %}
             </ul>
         </section>
-    
+
         <!-- Friend Requests -->
         <section class="list-section">
             <h2>Friend Requests</h2>
@@ -130,16 +122,19 @@
 </main>
 
 <script src="/static/js/libs/socket.io.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.2.1/jsencrypt.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
 <script>
     let room_id = 0;
 
-    // when the user presses the "Enter" key inside of the "message box", 
+    // when the user presses the "Enter" key inside of the "message box",
     // the message is sent to the server
     $("#message").on("keyup", (e) => {
         if (e.key == "Enter") {
             send();
         }
-    });
+    })
 
     // when the user presses the enter key inside of the "receiver box"
     // the user joins a (socket) room
@@ -147,19 +142,21 @@
         if (e.key == "Enter") {
             join_room();
         }
-    });
+    })
 
     //$(document).ready(() => {
-    //    // Check if user has already joined a room
+    //    // room_id is undefined if the user hasn't joined a room
+    //    // we early return in this case
     //    if (Cookies.get("room_id") == undefined) {
     //        return;
     //    }
-    //
-    //    // Display message box and hide "Chat with" box
+
+    //    // the user has already joined an existing room
+    //    // we'll display the message box, instead of the "Chat with: " box
     //    $("#chat_box").hide();
     //    $("#input_box").show();
     //    room_id = parseInt(Cookies.get("room_id"));
-    //});
+    //})
 
     // Here's the Socket IO part of the code
     // things get a bit complicated here so brace yourselves :P
@@ -169,12 +166,13 @@
     // initializes the socket
     const socket = io();
 
+    // an incoming message arrives, we'll add the message to the message box
     socket.on("incoming", (data, color) => {
         if (typeof data === "string") {
             add_message(data, color);
         } else if (Array.isArray(data) && data.length === 3) {
             let [username, encrypted_message, mac] = data;
-            // Retrieve shared secret from localStorage
+            // Retrieve the shared secret from localStorage or secure storage
             let sharedSecretKey = localStorage.getItem("sharedSecretKey");
             
             // Check if sharedSecretKey is not null or undefined
@@ -196,50 +194,47 @@
         }
     });
 
+    // Event listener for "user_connected" event
     socket.on("user_connected", (username) => {
         $(`#status-${username}`).removeClass("offline").addClass("online");
     });
 
+    // Event listener for "user_disconnected" event
     socket.on("user_disconnected", (username) => {
         $(`#status-${username}`).removeClass("online").addClass("offline");
     });
 
-    // Handle public_key_response event
+    // Event listener for "public_key_response" event
     socket.on('public_key_response', (receiverPublicKey) => {
         console.log("Received public key:", receiverPublicKey);
         console.log("Type of receiverPublicKey:", typeof receiverPublicKey);
 
-        if (typeof receiverPublicKey === 'string') {
-            console.error("Error receiving public key:", receiverPublicKey);
-            return;
-        }
-
-        // Format the public key
+        // Format public key
         const formattedPublicKey = formatPublicKey(receiverPublicKey);
-        console.log("Formatted Public Key:", formattedPublicKey); // Debugging: Check if the public key is formatted correctly
+        console.log("Formatted Public Key:", formattedPublicKey);
 
-        // Retrieve the private key from localStorage
+        // Retrieve private key from localStorage
         let privateKey = localStorage.getItem("privateKey");
-        console.log("Private Key:", privateKey); // Debugging: Check if the private key is retrieved correctly
+        console.log("Private Key:", privateKey); // Debugging: Check if private key is retrieved correctly
 
-        // Retrieve the shared secret key from localStorage
+        // Retrieve shared secret key from localStorage
         let sharedSecretKey = localStorage.getItem("sharedSecretKey");
-        console.log("Shared Secret Key:", sharedSecretKey); // Debugging: Check if the shared secret key is retrieved correctly
+        console.log("Shared Secret Key:", sharedSecretKey); // Debugging: Check if shared secret key is retrieved correctly
 
-        // Encrypt the message using the formatted receiver's public key
+        // Encrypt message using formatted receiver's public key
         let encryptedMessage = encryptMessage(message, formattedPublicKey);
-        console.log("Encrypted Message:", encryptedMessage); // Debugging: Check if the message is encrypted correctly
+        console.log("Encrypted Message:", encryptedMessage); // Debugging: Check if message is encrypted correctly
 
-        // Generate MAC using the shared secret key
+        // Generate MAC using shared secret key
         let mac = generateMAC(encryptedMessage, sharedSecretKey);
-        console.log("MAC:", mac); // Debugging: Check if the MAC is generated correctly
+        console.log("MAC:", mac); // Debugging: Check if MAC is generated correctly
 
         console.log("Sending message:", {
             username: username,
             encryptedMessage: encryptedMessage,
             mac: mac,
             room_id: room_id
-        }); // Debugging: Log the data being sent
+        }); // Debugging: Log data being sent
 
         socket.emit("send", username, encryptedMessage, mac, room_id);
     });
@@ -251,38 +246,46 @@
         $("#message").val("");
         let receiver = $("#receiver").val();
 
-        // Request receiver's public key from server
+        // Request the receiver's public key from the server
         socket.emit('request_public_key', receiver);
     }
 
     // Function to join a room
     function join_room() {
         let receiver = $("#receiver").val();
-
         if (receiver === "") {
             alert("Please enter a username to chat with.");
             return;
         }
 
-        // pass in the receiver of our message to the server
-        // as well as the current user's username
-        socket.emit("join", username, receiver, (res) => {
-            // res is a string with the error message if the error occurs
-            // this is a pretty bad way of doing error handling, but watevs
-            if (typeof res != "number") {
-                alert(res);
-                return;
+        // Retrieve user's public key from localStorage
+        let publicKey = localStorage.getItem("publicKey");
+
+        // Pass public key to server when emitting "join" event
+        socket.emit("join", username, receiver, publicKey, (response) => {
+            console.log("Server response:", response);
+            console.log("Response type:", typeof response);
+            console.log("Response keys:", Object.keys(response));
+            
+            if (typeof response === "object" && response.room_id && response.receiver_public_key && response.shared_secret_key) {
+                let room_id = response.room_id;
+                let receiverPublicKey = response.receiver_public_key;
+                let sharedSecretKey = response.shared_secret_key;
+                // Store room_id and sharedSecretKey in localStorage
+                Cookies.set("room_id", room_id);
+                localStorage.setItem("sharedSecretKey", sharedSecretKey);
+                // Update room_id variable
+                room_id = response.room_id;
+                // Show input box and hide chat box
+                $("#chat_box").hide();
+                $("#input_box").show();
+                // Encrypt message using receiver's public key
+                // let encryptedMessage = encryptMessage(message, receiverPublicKey);
+            } else {
+                alert("Error: Invalid server response");
+                console.error("Invalid server response:", response);
             }
-
-            // set the room id variable to the room id returned by the server
-            room_id = res;
-            Cookies.set("room_id", room_id);
-
-            // now we'll show the input box, so the user can input their message
-            $("#chat_box").hide();
-            $("#input_box").show();
         });
-     
     }
 
     // function when the user clicks on "Leave Room"
@@ -330,14 +333,13 @@
         const mac = CryptoJS.HmacSHA256(message, secretKey);
         return mac.toString(CryptoJS.enc.Hex);
     }
-    
+
     // Function to verify a MAC
     function verifyMAC(message, mac, secretKey) {
         if (typeof secretKey !== 'string') {
             console.error("Shared secret key must be a string");
             return false;
         }
-
         const expectedMac = CryptoJS.HmacSHA256(message, secretKey).toString(CryptoJS.enc.Hex);
         return mac === expectedMac;
     }
@@ -353,5 +355,4 @@
     // Event listener for "join-room-btn" click event
     document.getElementById('join-room-btn').addEventListener('click', join_room);
 </script>
-
 {% endblock %}

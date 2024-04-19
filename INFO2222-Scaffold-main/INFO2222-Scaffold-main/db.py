@@ -3,7 +3,7 @@ db
 database file, containing all the logic to interface with the sql database
 '''
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import Session
 from models import *
 import hashlib
@@ -22,10 +22,10 @@ engine = create_engine("sqlite:///database/main.db", echo=False)
 # initializes the database
 Base.metadata.create_all(engine)
 
-# inserts a user to the database - updated to include salt
-def insert_user(username: str, password: str, salt: str):
+# inserts a user to the database
+def insert_user(username: str, password: str, salt: str, public_key: str, private_key: str):
     with Session(engine) as session:
-        user = User(username=username, password=password, salt=salt)
+        user = User(username=username, password=password, salt=salt, public_key=public_key, private_key=private_key)
         session.add(user)
         session.commit()
 
@@ -34,79 +34,26 @@ def get_user(username: str):
     with Session(engine) as session:
         return session.query(User).filter_by(username=username).first()
 
-
-#get request to get all the friends of a user
-def get_friends(username):
+# takes a User object and updates it in database
+def update_user(user):
     with Session(engine) as session:
-        user = session.query(User).filter_by(username=username).first()
-        if user:
-            return [friend.username for friend in user.friends]
-        return []
-    
-
-#there is some fuction that gets posts requests ..
-def add_friend(current_user, friend_username):
-    with Session(engine) as session:
-        # Query user object from the database
-        user = session.get(User, current_user)
-        friend = session.get(User, friend_username)
-        
-        if not user:
-            raise ValueError("User not found")
-        
-        if not friend:
-            raise ValueError("Friend not found")
-        
-        # Add friend to user's friends list
-        if user.friends:
-
-            if friend_username in user.friends:
-                return "Friend already added"
-            else:
-                user.friends.append(friend_username)
-        
-        # Add user to friend's friends list (bidirectional)
-        if friend.friends:
-            if current_user in friend.friends:
-                return "Friend already added"
-            else:
-                friend.friends.append(current_user)
-    
+        session.merge(user)
         session.commit()
-
-        # if friend not in user.friends:
-        #     user.friends.append(friend)
-        #     session.commit()
-        #     return True
-        # else:
-        #     return False
-        
-
-def sendFriendRequest(username,target):
-
-    targetAccount = get_user(target)
-    
-    
-    if not targetAccount or targetAccount == None or targetAccount == "":
-        return "friend not found"
-
-    targetAccount.friendRequests.append(username)
-
-
-    #for testing
-    return targetAccount.friendRequests
-
-def retieve_Friend_Requests(username):
-
-    user = get_user(username)
-
-    user.friendRequests.append("test")
-
-
-    print(user.friendRequests)
-    return user.friendRequests
-
 
 def hash_password(password, salt):
     hashedPassword = hashlib.sha256((password + salt).encode()).hexdigest()
     return hashedPassword
+
+def insert_conversation(user1, user2, shared_secret):
+    with Session(engine) as session:
+        conversation = Conversation(user1_id=user1, user2_id=user2, shared_secret=shared_secret)
+        session.add(conversation)
+        session.commit()
+
+def get_conversation(username, room_id):
+    with Session(engine) as session:
+        conversation = session.query(Conversation).filter(
+            or_(Conversation.user1_id == username, Conversation.user2_id == username),
+            Conversation.id == room_id
+        ).first()
+        return conversation

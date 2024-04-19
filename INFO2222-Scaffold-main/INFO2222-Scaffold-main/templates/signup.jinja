@@ -3,38 +3,42 @@ Sign up page, pretty much the same as login.
 -->
 {% extends 'base.jinja' %}
 
-
-{% block content %} 
-    <h1>Sign Up</h1>
+{% block content %}
+<h1>Sign Up</h1>
+<form id="signup-form">
     <p>Username</p>
     <input id="username"/>
     <p>Password</p>
     <input id="password" type="password"/>
-    <button onclick="signup()">Sign up</button>
+    <button type="submit">Sign up</button>
+</form>
 
-    <script>
-         function isValidURL(string) {
-            if (string.length == 0) {
-                return false;
-            }
-            if (string[0] == "/") {
-                return true;
-            }
-            return false;
-        }
-
-        // this function is identical to login(), see login.jinja
-        async function signup() {
-            let loginURL = "{{ url_for('signup_user') }}";
-            let res = await axios.post(loginURL, {
+<script>
+$(document).ready(function() {
+    $("#signup-form").submit(function(event) {
+        event.preventDefault();
+        $.ajax({
+            url: "{{ url_for('signup_user') }}",
+            method: "POST",
+            data: JSON.stringify({
                 username: $("#username").val(),
                 password: $("#password").val()
-            });
-            if (!isValidURL(res.data)) {
-                alert(res.data);
-                return;
+            }),
+            contentType: "application/json",
+            success: function(response) {
+                if (typeof response === "object") {
+                    localStorage.setItem("publicKey", response.public_key);
+                    localStorage.setItem("privateKey", response.private_key);
+                    window.location.href = response.url;
+                } else {
+                    alert(response);
+                }
+            },
+            error: function() {
+                alert("Signup failed. Please try again.");
             }
-            window.open(res.data, "_self")
-        }
-    </script>
+        });
+    });
+});
+</script>
 {% endblock %}

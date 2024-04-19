@@ -22,8 +22,6 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_hex()
 socketio = SocketIO(app)
 
-
-
 # don't remove this!!
 import socket_routes
 
@@ -63,7 +61,7 @@ def login_user():
     
     session['username'] = username
 
-    return url_for('home', username=username)
+    return jsonify(url=url_for('home', username=username), public_key=user.public_key, private_key=user.private_key)
 
 # handles a get request to the signup page
 @app.route("/signup")
@@ -88,9 +86,8 @@ def signup_user():
 
         db.insert_user(username, hashedPassword, salt, public_key.decode(), private_key.decode())
     
-        return url_for('home', username=username)
+        return jsonify(url=url_for('home', username=username), public_key=public_key.decode(), private_key=private_key.decode())
     return "Error: User already exists!"
-
 
 # handler when a "404" error happens
 @app.errorhandler(404)

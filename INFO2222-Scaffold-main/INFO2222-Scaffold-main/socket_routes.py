@@ -5,7 +5,8 @@ file containing all the routes related to socket.io
 
 
 from flask_socketio import join_room, emit, leave_room
-from flask import request
+from flask import request, session
+from crypto_utils import generate_shared_secret, verify_mac
 
 try:
     from __main__ import socketio
@@ -71,33 +72,33 @@ def send(username, encrypted_message, mac, room_id):
     message = encrypted_message.encode()
     is_valid = verify_mac(message, bytes.fromhex(mac), shared_secret)
     if is_valid:
-        print("Emitting 'incoming' event:", (username, encrypted_message, mac)) # Debugging: Log the data being emitted
+        print("Emitting 'incoming' event:", (username, encrypted_message, mac)) # Debugging: Log data being emitted
         emit("incoming", (username, encrypted_message, mac), to=room_id)
     else:
         # Handle case when message integrity is compromised
         print("Message integrity compromised!")
     
+# join room event handler
+# sent when the user joins a room
 @socketio.on("join")
-def join(sender_name, receiver_name):
-    
+def join(sender_name, receiver_name, public_key):
     receiver = db.get_user(receiver_name)
     if receiver is None:
         return "Unknown receiver!"
-    
+
     sender = db.get_user(sender_name)
     if sender is None:
         return "Unknown sender!"
 
+    shared_secret = generate_shared_secret(sender.private_key.encode(), public_key.encode())
+    db.insert_conversation(sender_name, receiver_name, shared_secret.hex())
+
     room_id = room.get_room_id(receiver_name)
 
-    # if the user is already inside of a room 
     if room_id is not None:
-        
         room.join_room(sender_name, room_id)
         join_room(room_id)
-        # emit to everyone in the room except the sender
         emit("incoming", (f"{sender_name} has joined the room.", "green"), to=room_id, include_self=False)
-        # emit only to the sender
         emit("incoming", (f"{sender_name} has joined the room. Now talking to {receiver_name}.", "green"))
     else:
         room_id = room.create_room(sender_name, receiver_name)
@@ -107,7 +108,6 @@ def join(sender_name, receiver_name):
     print("room_id:", room_id)
     print("receiver.public_key:", receiver.public_key)
     print("shared_secret:", shared_secret)
-
     response = {
         "room_id": room_id,
         "receiver_public_key": receiver.public_key,
@@ -116,13 +116,6 @@ def join(sender_name, receiver_name):
     print("response:", response)
     return response
 
-# leave room event handler
-@socketio.on("leave")
-def leave(username, room_id):
-    emit("incoming", (f"{username} has left the room.", "red"), to=room_id)
-    leave_room(room_id)
-    room.leave_room(username)
- 
 @socketio.on('request_public_key')
 def handle_request_public_key(username):
     print(f"Received request_public_key event for username: {username}")
@@ -135,3 +128,10 @@ def handle_request_public_key(username):
     else:
         print(f"User not found: {username}")
         emit('public_key_response', 'User not found', room=request.sid)
+
+# leave room event handler
+@socketio.on("leave")
+def leave(username, room_id):
+    emit("incoming", (f"{username} has left the room.", "red"), to=room_id)
+    leave_room(room_id)
+    room.leave_room(username)

@@ -44,4 +44,3 @@ def verify_mac(message, signature, secret_key):
 def generate_shared_secret(private_key, public_key):
     shared_key = PBKDF2(private_key, public_key, dkLen=16, count=10000)
     return shared_key
- 
