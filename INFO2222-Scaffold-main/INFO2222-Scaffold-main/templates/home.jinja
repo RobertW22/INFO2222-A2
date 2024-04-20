@@ -130,7 +130,8 @@
                 {% for friend in friends %}
                     <li>{{ friend }}</li>
                 {% endfor %}
-
+                
+               
             <ul>
         
         
@@ -219,6 +220,9 @@
     $(document).ready(() => {
         // room_id is undefined if the user hasn't joined a room
         // we early return in this case
+
+        generateKeyPair();
+
         if (Cookies.get("room_id") == undefined) {
             return;
         }
@@ -313,6 +317,55 @@
         let box = $("#message_box");
         let child = $(`<p style="color:${color}; margin: 0px;"></p>`).text(message);
         box.append(child);
+    }
+
+
+
+    // Generate KeyPair
+    function generateKeyPair() {
+        const keyPair = await window.crypto.subtle.generateKey(
+            {
+                name: "RSA-OAEP",
+                modulusLength: 2048,
+                publicExponent: new Uint8Array([1, 0, 1]),
+                hash: "SHA-256",
+            },
+            true,
+            ["encrypt", "decrypt"]
+        );
+
+
+        const publicKey = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
+        const publicKeyPem = spkiToPem(publicKey); // pem format to store on server
+
+        // send pub key to server
+        await fetch("https:localhost:5000/save_Public_Key", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                username: "{{ username }}",
+                publicKey: publicKeyPem }),
+        });
+
+
+        // must send public key to server now
+        return keyPair;
+    }
+
+
+    // Convert SPKI to PEM
+    function spkiToPem(spki) {
+
+        const pemHeader = '-----BEGIN PUBLIC KEY-----\n';
+        const pemFooter = '-----END PUBLIC KEY-----';
+        let base64 = btoa(String.fromCharCode(...new Uint8Array(spki))); // string format 
+
+        let formattedBase64 = base64String.match(/.{1,64}/g).join('\n'); // split into 64 character lines
+
+        
+        return pemHeader + formattedBase64 + '\n' + pemFooter;
     }
     
 </script>

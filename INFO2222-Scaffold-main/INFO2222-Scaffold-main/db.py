@@ -34,6 +34,15 @@ def get_user(username: str):
     with Session(engine) as session:
         return session.get(User, username)
     
+# puts public key in the user table
+def put_public_key(username: str, public_key: str):
+    with Session(engine) as session:
+        user = session.get(User, username)
+        
+        if user:
+        
+            user.publicKey = public_key
+            session.commit()
 
 
 

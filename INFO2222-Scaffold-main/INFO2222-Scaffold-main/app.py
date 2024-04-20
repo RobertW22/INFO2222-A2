@@ -183,7 +183,33 @@ def reject_friend_request():
 
     return redirect(url_for('home', username=username, friend_requests=friend_requests))
 
+@app.route("/save_Public_Key", methods=["POST"])
+def save_Public_Key():
+    
+    if not request.is_json:
+        return "Error: Not JSON", 400
+    
+    print("UP IN THE KEY SAVE FUNCTION")
+    data = request.get_json()
+    username = data.get("username")
+    
+    if not username:
+        return "Error: No username"
+    
+    public_key = data.get("public_key")
+    if not public_key:
+        return "Error: No public key"
+    
+    
+    # update the public key in the database
+    update = db.put_public_key(username, public_key)
+    if update:
+        return "Success: Public key updated"
+    else:
+        return "Error: Public key not updated"
 
+
+    return redirect(url_for('home', username=username))
 
 if __name__ == '__main__':
     socketio.run(app, ssl_context=('./certs/newCerts2/localhostServer.crt', './certs/newCerts2/localhostServer.key'))
