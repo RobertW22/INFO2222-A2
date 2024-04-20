@@ -189,11 +189,11 @@ def save_Public_Key():
     if not request.is_json:
         return "Error: Not JSON", 400
     
-    print("UP IN THE KEY SAVE FUNCTION")
+    
     data = request.get_json()
     username = data.get("username")
     
-    print("Username: " + username)
+    
     
     if not username:
         print("Error: No username")
@@ -210,8 +210,10 @@ def save_Public_Key():
     
     print(update)
     if update:
+        print("Success: Public key updated")
         return "Success: Public key updated"
     else:
+        print("Error: Public key not updated")
         return "Error: Public key not updated"
 
 

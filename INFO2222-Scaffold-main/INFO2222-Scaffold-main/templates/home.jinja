@@ -262,11 +262,9 @@
     } 
 
     // implent MAC 
-    function encryptMessage(message, key){
+    async function encryptMessage(message, publicKey){
 
-        const hmac = crypto.createHmac('sha256', key);
-        hmac.update(message);
-        return hmac.digest('hex');
+        
 
     }
 
@@ -350,11 +348,14 @@
                 publicKey: publicKeyPem }),
         });
 
+        // store private key in indexedDB
+        await storePrivateKey(keyPair.privateKey);
 
         // must send public key to server now
         return keyPair;
     }
 
+ 
 
     // Convert SPKI to PEM
     function spkiToPem(spki) {
@@ -367,6 +368,52 @@
 
         
         return pemHeader + formattedBase64 + '\n' + pemFooter;
+    }
+
+
+    // store prive key in indexedDB storage
+    async function storePrivateKey(privateKey) {
+        const db = await window.indexedDB.open("keyPairs", 1);
+
+        db.onupgradeneeded = function() {
+            const db = this.result;
+            if (!db.objectStoreNames.contains('keys')) {
+                db.createObjectStore('keys', { keyPath: 'id' });
+            }
+        };
+
+
+        db.onsuccess = async function() {
+            const db = this.result;
+            const transaction = db.transaction('keys', 'readwrite');
+            const store = transaction.objectStore('keys');
+            await store.put({id: 'privateKey', key: privateKey});
+            console.log("Private Key stored in indexedDB");
+            transaction.oncomplete = () => console.log("Private Key storage complete");
+        };
+
+        db.oneerror = function(e) {
+            console.log("Error storing private key in indexedDB");
+        };
+    }
+
+    async function getPrivateKey() {
+        return new Promise((resolve, reject) => {
+            const db = window.indexedDB.open('keyPairs', 1);
+    
+            db.onsuccess = function() {
+                const store = this.result.transaction('keys', 'readonly').objectStore('keys');
+                const request = store.get('privateKey');
+    
+                request.onsuccess = function() {
+                    resolve(request.result.key);
+                };
+    
+                request.onerror = function(e) {
+                    reject('Error fetching the private key: ', e.target.error);
+                };
+            };
+        });
     }
     
 </script>
