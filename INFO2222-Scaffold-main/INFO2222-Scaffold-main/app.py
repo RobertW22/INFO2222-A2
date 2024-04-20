@@ -4,7 +4,7 @@ this is where you'll find all of the get/post request handlers
 the socket event handlers are inside of socket_routes.py
 '''
 
-from flask import Flask, render_template, request, abort, url_for, session, redirect
+from flask import Flask, render_template, request, abort, url_for, session, redirect, jsonify
 from flask_socketio import SocketIO
 import db
 import secrets
@@ -215,9 +215,24 @@ def save_Public_Key():
     else:
         print("Error: Public key not updated")
         return "Error: Public key not updated"
-
+    
 
     return redirect(url_for('home', username=username))
+
+
+
+@app.route("/get_Public_Key/<username>", methods=["GET"])
+def get_Public_Key(username):
+
+    print("Username: " + username)
+    public_key = db.get_public_key(username)
+    print(public_key)
+    
+    
+    if public_key:
+        return jsonify({"public_key": public_key})
+    else:
+        return jsonify({"error": "Public key not found"}), 404
 
 if __name__ == '__main__':
     socketio.run(app, ssl_context=('./certs/newCerts2/localhostServer.crt', './certs/newCerts2/localhostServer.key'))

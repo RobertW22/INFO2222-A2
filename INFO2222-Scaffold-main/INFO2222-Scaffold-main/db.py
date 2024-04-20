@@ -49,7 +49,14 @@ def put_public_key(username: str, public_key: str):
             
     return savedKey
 
-
+def get_public_key(username: str):
+    with Session(engine) as session:
+        user = session.get(User, username)
+        
+        if user:
+            return user.publicKey
+        else:
+            return "User not found"
 
 #get request to get all the friends of a user
 #there is some fuction that gets posts requests ..

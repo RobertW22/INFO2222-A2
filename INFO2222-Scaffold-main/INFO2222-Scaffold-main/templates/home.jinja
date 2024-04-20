@@ -246,30 +246,130 @@
     // an incoming message arrives, we'll add the message to the message box
     socket.on("incoming", (msg, color="black") => {
         
-        add_message(msg, color);
+    
+
+        // decrypt the message
+       
+
+        
+        if (msg.length > 200) {
+            handleIncomingMessage(msg, color);
+        }
+        else {
+            add_message(msg, color);
+        }
+        
+
+        //add_message(msg, color);
 
 
     })
     
     // we'll send the message to the server by emitting a "send" event
     // WHen sending the MAC we send the message, mac , and the key
-    function send() {
+    async function send() {
         let message = $("#message").val();
 
-
-        $("#message").val("");
-        socket.emit("send", username, message, room_id);  
-    } 
-
-    // implent MAC 
-    async function encryptMessage(message, publicKey){
-
+        add_message(username + ": " + message, "black");
+        // retrieve the public key of the receiver
+        const receiver = $("#receiver").val();
+        console.log(receiver);
+        const targetsPublicKeyPEM = await fetchPublicKey(receiver); // receiver's public key in PEM format
+        const targetsPublicKey = await importPublicKey(targetsPublicKeyPEM); // receiver's public key in CryptoKey format
         
+        // encrypt the message with the receiver's public key
+        const encryptedMessage = await encryptMessage(message, targetsPublicKey);
+        
+        console.log("Encrypted Message: ", encryptedMessage);
+        console.log("Message: ", message);
 
-    }
 
     
 
+        
+
+        $("#message").val("");
+        socket.emit("send", username, encryptedMessage, room_id);  
+    } 
+
+    // encrypt the message with the receiver's public key
+    async function encryptMessage(message, targetsPublicKey){
+
+        const encoder = new TextEncoder();
+        const data = encoder.encode(message);
+        const encryptedData = await window.crypto.subtle.encrypt(
+            {
+                name: "RSA-OAEP",
+                hash: { name: "SHA-256" }
+            },
+            targetsPublicKey,
+            data
+        );
+        const base64Encode = window.btoa(String.fromCharCode(...new Uint8Array(encryptedData)));
+        
+        return base64Encode;
+
+    }
+
+    async function decryptMessage(encryptedMessage, privateKey) {
+
+        if (!privateKey || !(privateKey instanceof CryptoKey)) {
+            console.error("Invalid private key provided:", privateKey);
+            return null;
+        }
+
+
+        console.log("privateKey: ", privateKey)
+        try {
+
+            const encodedMessage = window.atob(encryptedMessage);
+            const bytes = new Uint8Array(encodedMessage.length).map((_, i) => encodedMessage.charCodeAt(i));
+            
+
+
+            const decryptedData = await window.crypto.subtle.decrypt(
+                { name: "RSA-OAEP", hash: { name: "SHA-256" } },
+                privateKey,
+                bytes
+            );
+            const decoder = new TextDecoder();
+            return decoder.decode(decryptedData);
+        } catch (error) {
+            console.error("Decryption failed:", error);
+            throw new Error("Decryption process failed, possibly due to incorrect encoding.");;
+        }
+    }
+
+    async function handleIncomingMessage(encryptedMessage, color) {
+        try {
+            const privateKey = await getPrivateKey(); // wait for the private key to be fetched
+            if (!privateKey || !(privateKey instanceof CryptoKey)) {
+                console.error("Invalid or undefined private key:", privateKey);
+                return;
+            }
+
+            const index = encryptedMessage.indexOf(':');
+            const firstPart = encryptedMessage.slice(0, index+1);
+            const secondPart = encryptedMessage.slice(index+1);
+
+            console.log("First Encoded Message Before Decoding:", firstPart);
+            console.log("Second Encoded Message Before Decoding:", secondPart);
+    
+            
+            const decryptedMessage = await decryptMessage(secondPart, privateKey);
+            console.log("Decrypted Message: ", decryptedMessage);
+
+            const message = firstPart + decryptedMessage;
+
+            add_message(message, color);
+            console.log("ran add message")
+        } catch (error) {
+            console.error("Error handling incoming message:", error);
+        }
+    }
+
+    
+    
 
 
 
@@ -312,8 +412,10 @@
     // called when an incoming message has reached a client
     function add_message(message, color) {
 
+        let displayMessage = message;
+
         let box = $("#message_box");
-        let child = $(`<p style="color:${color}; margin: 0px;"></p>`).text(message);
+        let child = $(`<p style="color:${color}; margin: 0px;"></p>`).text(displayMessage);
         box.append(child);
     }
 
@@ -373,6 +475,7 @@
 
     // store prive key in indexedDB storage
     async function storePrivateKey(privateKey) {
+        const exportedKey = await window.crypto.subtle.exportKey('pkcs8', privateKey);
         const db = await window.indexedDB.open("keyPairs", 1);
 
         db.onupgradeneeded = function() {
@@ -387,7 +490,7 @@
             const db = this.result;
             const transaction = db.transaction('keys', 'readwrite');
             const store = transaction.objectStore('keys');
-            await store.put({id: 'privateKey', key: privateKey});
+            await store.put({id: 'privateKey', key: exportedKey});
             console.log("Private Key stored in indexedDB");
             transaction.oncomplete = () => console.log("Private Key storage complete");
         };
@@ -397,9 +500,10 @@
         };
     }
 
-    async function getPrivateKey() {
+    async function getPrivateKey2() {
+        const db = window.indexedDB.open('keyPairs', 1);
         return new Promise((resolve, reject) => {
-            const db = window.indexedDB.open('keyPairs', 1);
+            
     
             db.onsuccess = function() {
                 const store = this.result.transaction('keys', 'readonly').objectStore('keys');
@@ -415,6 +519,82 @@
             };
         });
     }
+
+    async function getPrivateKey() {
+        const db = await window.indexedDB.open('keyPairs', 1);
+        return new Promise((resolve, reject) => {
+            db.onsuccess = function() {
+                const db = this.result;
+                const transaction = db.transaction('keys', 'readonly');
+                const store = transaction.objectStore('keys');
+                const request = store.get('privateKey');
+    
+                request.onsuccess = async function() {
+                    const exportedKey = request.result.key;  // arrayBuffer
+                    try {
+                        const privateKey = await window.crypto.subtle.importKey(
+                            'pkcs8',
+                            exportedKey,
+                            {   
+                                name: "RSA-OAEP",
+                                hash: { name: "SHA-256" },
+                            },
+                            true,
+                            ["decrypt"]
+                        );
+                        resolve(privateKey);
+                    } catch (error) {
+                        reject('Failed to import the private key: ' + error);
+                    }
+                };
+    
+                request.onerror = function(e) {
+                    reject('Error fetching the private key from IndexedDB: ' + e.target.error);
+                };
+            };
+        });
+    }
+    
+
+
+    async function fetchPublicKey(username) {
+        try {
+            const response = await fetch(`/get_Public_Key/${username}`);
+            if (response.ok) {
+                const data = await response.json();
+                //console.log("Public Key: ", data.public_key);
+                return data.public_key;
+            } else {
+                throw new Error('Failed to fetch public key');
+            }
+        } catch (error) {
+            console.error('Error fetching public key:', error);
+            return null;  
+        }
+    }
+
+    // PEM to public key
+    async function importPublicKey(pem) {
+        if (typeof pem !== 'string') {
+            console.error("PEM is not a string:", pem);
+            throw new Error("PEM key must be a string.");
+        }
+        const pemHeader = "-----BEGIN PUBLIC KEY-----";
+        const pemFooter = "-----END PUBLIC KEY-----";
+        let base64 = pem.replace(pemHeader, '').replace(pemFooter, '').replace(/\s/g, '');
+        const binaryDer = window.atob(base64);
+        return window.crypto.subtle.importKey(
+            "spki",
+            new Uint8Array([...binaryDer].map(char => char.charCodeAt(0))),
+            {   
+                name: "RSA-OAEP",
+                hash: "SHA-256"
+            },
+            true,
+            ["encrypt"]
+        );
+    }
+
     
 </script>
 {% endblock %}
