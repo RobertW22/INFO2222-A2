@@ -322,7 +322,7 @@
 
 
     // Generate KeyPair
-    function generateKeyPair() {
+    async function generateKeyPair() {
         const keyPair = await window.crypto.subtle.generateKey(
             {
                 name: "RSA-OAEP",
@@ -337,9 +337,10 @@
 
         const publicKey = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
         const publicKeyPem = spkiToPem(publicKey); // pem format to store on server
+        
 
         // send pub key to server
-        await fetch("https:localhost:5000/save_Public_Key", {
+        await fetch("/save_Public_Key", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -362,7 +363,7 @@
         const pemFooter = '-----END PUBLIC KEY-----';
         let base64 = btoa(String.fromCharCode(...new Uint8Array(spki))); // string format 
 
-        let formattedBase64 = base64String.match(/.{1,64}/g).join('\n'); // split into 64 character lines
+        let formattedBase64 = base64.match(/.{1,64}/g).join('\n'); // split into 64 character lines
 
         
         return pemHeader + formattedBase64 + '\n' + pemFooter;

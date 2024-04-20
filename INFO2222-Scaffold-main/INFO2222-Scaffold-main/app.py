@@ -193,16 +193,22 @@ def save_Public_Key():
     data = request.get_json()
     username = data.get("username")
     
+    print("Username: " + username)
+    
     if not username:
+        print("Error: No username")
         return "Error: No username"
     
-    public_key = data.get("public_key")
+    public_key = data.get("publicKey")
+    
     if not public_key:
         return "Error: No public key"
     
     
     # update the public key in the database
     update = db.put_public_key(username, public_key)
+    
+    print(update)
     if update:
         return "Success: Public key updated"
     else:

@@ -42,7 +42,12 @@ def put_public_key(username: str, public_key: str):
         if user:
         
             user.publicKey = public_key
+            
+            savedKey = user.publicKey
+            
             session.commit()
+            
+    return savedKey
 
 
 
