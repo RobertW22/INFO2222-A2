@@ -199,12 +199,11 @@ def rejectFriendRequest(username, friendName):
     
 
 
-# Used for registering
+
 def hash_password(password, salt):
 
     # Hash and salt the password
     saltedPass = salt + password
-
     hashedPassword = hashlib.sha256(saltedPass.encode()).hexdigest()
 
     return hashedPassword
@@ -226,10 +225,9 @@ def add_salt(username, salt):
 def validPassword(password):
     if len(password) < 8:
         return False
-    
+    # Upper case
     if not any(char.isupper() for char in password):
         return False
-    
     # specical character
     specialChars = "!@#$%^&*()-+"
     if not any(char in specialChars for char in password):

@@ -46,20 +46,12 @@ def login_user():
 
     username = request.json.get("username")
     password = request.json.get("password")
-
-
-    
-
     # Need to check hash pass here insted    
-
     user =  db.get_user(username)
     if user is None:
         return "Error: User does not exist!"
-
-    print("salt: " + user.salt)
     
     password = db.hash_password(password,user.salt)
-    
     if user.password != password:
         return "Error: Password does not match!"
     
@@ -85,6 +77,7 @@ def signup_user():
         return "Error: Password must be at least 8 characters long and contain at least one uppercase letter and one special character"
 
 
+
     if db.get_user(username) is None:
 
         # HASH AND SALT PASSWORD
@@ -93,7 +86,6 @@ def signup_user():
         hashedPassword = db.hash_password(password,salt)
 
         
-
         db.insert_user(username, hashedPassword,salt)
 
         user = db.get_user(username)
@@ -141,10 +133,7 @@ def add_Friend():
     username = request.form.get("username")
     friendsName = request.form.get("friend_username")
 
-    print("Username:" +username)
-    print("Friends name:" +friendsName)
-    # Print returned friend request list
-    print(db.sendFriendRequest(username,friendsName))
+    db.sendFriendRequest(username,friendsName)
     friend_requests = db.retieve_Friend_Requests(friendsName)
 
     print(friend_requests)

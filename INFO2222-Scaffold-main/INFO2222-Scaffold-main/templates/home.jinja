@@ -282,12 +282,6 @@
         
         console.log("Encrypted Message: ", encryptedMessage);
         console.log("Message: ", message);
-
-
-    
-
-        
-
         $("#message").val("");
         socket.emit("send", username, encryptedMessage, room_id);  
     } 
@@ -306,7 +300,6 @@
             data
         );
         const base64Encode = window.btoa(String.fromCharCode(...new Uint8Array(encryptedData)));
-        
         return base64Encode;
 
     }
@@ -348,6 +341,7 @@
                 return;
             }
 
+            // Remove Senders name from the message
             const index = encryptedMessage.indexOf(':');
             const firstPart = encryptedMessage.slice(0, index+1);
             const secondPart = encryptedMessage.slice(index+1);
@@ -448,8 +442,6 @@
 
         const publicKey = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
         const publicKeyPem = spkiToPem(publicKey); // pem format to store on server
-        
-
         // send pub key to server
         await fetch("/save_Public_Key", {
             method: "POST",
