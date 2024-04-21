@@ -3,198 +3,160 @@
 -->
 {% extends 'base.jinja' %}
 
-
-{% block content %} 
-   <style>
+{% block content %}
+<style>
     nav {
         border-bottom: 1px solid black;
-        overflow: auto
+        overflow: auto;
     }
 
     #message_box {
-        border: 1px solid black; 
-        height: 400px; 
-        width: 800px; 
+        border: 1px solid black;
+        height: 400px;
+        width: 800px;
         overflow: auto;
         padding: 2px;
     }
 
     .container {
         display: flex;
-        
+        justify-content: space-between;
+        margin-top: 20px;
     }
 
-    
-    #friends_box {
-        border: 1px solid black; 
-        height: 400px; 
-        width: 200px; 
+    .section {
+        border: 1px solid black;
+        height: 400px;
+        width: 30%;
         overflow: auto;
-        padding: 2px;
+        padding: 10px;
     }
 
-    #requestBar {
-        margin-left: 40px; 
-        border: 1px solid black; 
-        height: 300px; 
-        width: 200px; 
-        overflow: auto;
-        padding: 2px;
+    .section h2 {
+        margin-top: 0;
     }
 
-    #requestSentBar {
-        margin-left: 40px; 
-        border: 1px solid black; 
-        height: 300px; 
-        width: 200px; 
-        overflow: auto;
-        padding: 2px;
+    .section ul {
+        list-style-type: none;
+        padding: 0;
     }
 
-    #friendRequestTitle {
-        margin-left: 130px;
+    .section li {
+        margin-bottom: 10px;
     }
 
-    #friendRequestSentTitle {
-        margin-left: 80px;
-    }
-
-    .text  {
+    .text {
         margin-top: 2px;
         margin-bottom: 2px;
     }
 
+    .status {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+
+    .online {
+        background-color: green;
+    }
+
+    .offline {
+        background-color: gray;
+    }
+
+    .add-friend-section {
+        margin-top: 20px;
+    }
+
+    .add-friend-section h2 {
+        margin-top: 0;
+    }
+
+    .add-friend-section form {
+        margin-top: 10px;
+    }
 </style>
 
-<!--Navbar, you'll see the username here-->
-<nav style="border-bottom: 1px solid black;">
+<nav>
     <ol style="float: right">
-        <li style="display:inline-block">Username:  {{ username }} </li>
+        <li style="display:inline-block">Username: {{ username }}</li>
     </ol>
 </nav>
 
-<h1>Messaging App </h1>
+<h1>Messaging App</h1>
 
 <main>
-    <!-- The messages are displayed here -->
     <section id="message_box"></section>
 
-    <!-- These part ideally should be a form element, 
-    but I wrote this code a year ago and I don't want to break anything...-->
     <section id="chat_box">
-        <p class="text">Chat with: </p>
+        <p class="text">Chat with:</p>
         <input id="receiver" placeholder="username">
-        <!-- MDN says its bad practice to use the onclick attribute,
-        but we're using it anyways coz its easy :)-->
         <button onclick="join_room()">Chat</button>
     </section>
 
-    <!-- The (message) input box is set to display: none initially, 
-    this means the input box is "invisible" initially-->
-    <section id="input_box" style="display: none" >
-        <p class="text">Message: </p>
+    <section id="input_box" style="display: none">
+        <p class="text">Message:</p>
         <input id="message" placeholder="message">
         <button onclick="send()">Send</button>
         <button onclick="leave()">Leave Room</button>
     </section>
 
-    <!-- Starting the friends list making here -->
-
-
     <div class="container">
-        
-        <section>
-            <h2>Friend List</h2>
-        </section>
-        
-        <section id="friendRequestTitle">
-            <h2>Friend Requests</h2>
-            
-        </section>
-
-        <section id="friendRequestSentTitle">
-            <h2>Friend Requests Sent</h2>
-        </section>
-    </div>
-    
-
-
-
-
-    <!-- Add friend box -->
-    <div class="container">
-        
-        <section id="friends_box">
-        
-            <ul>
+        <section class="section">
+            <h2>Friends List</h2>
+            <ul id="friends-list">
                 {% for friend in friends %}
-                    <li>{{ friend }}</li>
+                <li>
+                    <span class="status offline" id="status-{{ friend }}"></span>
+                    <a href="#" onclick="openChatroom('{{ friend }}')">{{ friend }}</a>
+                </li>
                 {% endfor %}
-                
-               
-            <ul>
-        
-        
+            </ul>
         </section>
-    
-        <!-- Add friend bar -->
-        <section id="requestBar">
-        
-        <ul>
-            {% for request in friend_requests %}
-                <li>{{ request }}
-                        <! -- Accept friend request form -->
-                    <form action="/accept_friend_request" method="post">
+
+        <section class="section">
+            <h2>Friend Requests</h2>
+            <ul>
+                {% for request in friend_requests %}
+                <li>
+                    {{ request }}
+                    <form action="/accept_friend_request" method="post" style="display: inline;">
                         <input type="hidden" name="username" value="{{ username }}">
                         <input type="hidden" name="friend_username" value="{{ request }}">
                         <button type="submit">Accept</button>
                     </form>
-
-                    <!-- Reject friend request form -->
-                    <form action="/reject_friend_request" method="post">
+                    <form action="/reject_friend_request" method="post" style="display: inline;">
                         <input type="hidden" name="username" value="{{ username }}">
                         <input type="hidden" name="friend_username" value="{{ request }}">
                         <button type="submit">Reject</button>
                     </form>
-
                 </li>
-
-
-
-            {% endfor %}
-        
-        
-
-        </section>
-
-        <!-- Friend request sent bar -->
-        <section id="requestSentBar">
-            <ul>
-                {% for request in friend_requests_sent %}
-                    <li>{{ request }}</li>
                 {% endfor %}
             </ul>
+        </section>
+
+        <section class="section">
+            <h2>Friend Requests Sent</h2>
+            <ul>
+                {% for request in friend_requests_sent %}
+                <li>{{ request }}</li>
+                {% endfor %}
+            </ul>
+        </section>
     </div>
 
-    <!-- Send Friend request forms [POST] -->
-    <section>
-    
+    <section class="add-friend-section">
+        <h2>Add Friend</h2>
         <form action="/add_friend" method="post">
-        
             <input type="hidden" name="username" value="{{ username }}">
-            <p class="text">Add friend:</p>
-
-            <input type="text" name="friend_username" placeholder="Enter friends's Username here">
-            <input type="submit" value="Add Friend">
+            <input type="text" name="friend_username" placeholder="Enter friend's username" required>
+            <button type="submit">Add Friend</button>
         </form>
-    
     </section>
-        
-
-
-
-
 </main>
+
 
 <script src="/static/js/libs/socket.io.min.js"></script>
 <script>
@@ -216,22 +178,11 @@
         }
     })
 
-
     $(document).ready(() => {
         // room_id is undefined if the user hasn't joined a room
         // we early return in this case
 
         generateKeyPair();
-
-        if (Cookies.get("room_id") == undefined) {
-            return;
-        }
-
-        // the user has already joined an existing room
-        // we'll display the message box, instead of the "Chat with: " box
-        $("#chat_box").hide();
-        $("#input_box").show();
-        room_id = parseInt(Cookies.get("room_id"));
     })
     
     // Here's the Socket IO part of the code
@@ -264,33 +215,39 @@
 
 
     })
+
+    // Event listener for "user_connected" event
+    socket.on("user_connected", (username) => {
+        $(`#status-${username}`).removeClass("offline").addClass("online");
+    });
+
+    // Event listener for "user_disconnected" event
+    socket.on("user_disconnected", (username) => {
+        $(`#status-${username}`).removeClass("online").addClass("offline");
+    });
     
     // we'll send the message to the server by emitting a "send" event
     // WHen sending the MAC we send the message, mac , and the key
     async function send() {
         let message = $("#message").val();
+        let receiver = $("#receiver").val();
+
+        // Check if receiver is a friend
+        let friends_list = await fetchFriendsList(username);
+        if (!friends_list.includes(receiver)) {
+            alert("You can only send messages to friends.");
+            return;
+        }
 
         add_message(username + ": " + message, "black");
-        // retrieve the public key of the receiver
-        const receiver = $("#receiver").val();
-        console.log(receiver);
-        const targetsPublicKeyPEM = await fetchPublicKey(receiver); // receiver's public key in PEM format
-        const targetsPublicKey = await importPublicKey(targetsPublicKeyPEM); // receiver's public key in CryptoKey format
-        
-        // encrypt the message with the receiver's public key
+        const targetsPublicKeyPEM = await fetchPublicKey(receiver);
+        const targetsPublicKey = await importPublicKey(targetsPublicKeyPEM);
         const encryptedMessage = await encryptMessage(message, targetsPublicKey);
-        
         console.log("Encrypted Message: ", encryptedMessage);
         console.log("Message: ", message);
-
-
-    
-
-        
-
         $("#message").val("");
         socket.emit("send", username, encryptedMessage, room_id);  
-    } 
+    }
 
     // encrypt the message with the receiver's public key
     async function encryptMessage(message, targetsPublicKey){
@@ -375,9 +332,7 @@
 
     // we emit a join room event to the server to join a room
     async function join_room() {
-       
         let receiver = $("#receiver").val();
-        
 
         // check if they are friends
         let friends_list = await fetchFriendsList(username);
@@ -385,9 +340,6 @@
             alert("You are not friends with this user");
             return;
         }
-
-        
-
 
         // pass in the receiver of our message to the server
         // as well as the current user's username
@@ -407,7 +359,6 @@
             $("#chat_box").hide();
             $("#input_box").show();
         });
-     
     }
 
     // function when the user clicks on "Leave Room"
@@ -626,6 +577,11 @@
         );
     }
 
+    // Function to open a chatroom when user clicks on an online friend
+    function openChatroom(friend) {
+        $("#receiver").val(friend);
+        join_room();
+    }
     
 </script>
 {% endblock %}

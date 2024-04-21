@@ -48,20 +48,6 @@ class User(Base):
     friendRequestsSent = Column(String, default="")
     publicKey = Column(String, default="")
     
-    #friends: Mapped[str] = mapped_column(String)
-    #friendRequests: Mapped[str] = mapped_column(String)
-
-
-
-    
-    # adding FRIENDS
-    #friends: Mapped[str] = mapped_column(String)
-
-    # Should we store friends and friend requests like this?
-
-    # friends: Mapped[list] = mapped_column(default=[])
-    # friendRequests: Mapped[list] = mapped_column(default=[])    
-    
 
 # stateful counter used to generate the room id
 class Counter():
@@ -97,8 +83,8 @@ class Room():
         del self.dict[user]
 
     # gets the room id from a user
-    def get_room_id(self, user: str):
-        if user not in self.dict.keys():
+    def get_room_id(self, user):
+        if user not in self.dict:
             return None
         return self.dict[user]
     

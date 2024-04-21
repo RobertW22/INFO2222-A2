@@ -127,17 +127,28 @@ def get_friends(username):
         user = session.get(User, username)
         if not user:
             return "User not found"
-        return user.friends.split(",")
+        
+        friends = user.friends.split(",")
+        return friends
   
 def acceptFriendRequest(username, friendName):
     with Session(engine) as session:
-
         user = session.get(User, username)
         friend = session.get(User, friendName)
 
         if not user or not friend:
             return "User or friend not found"
-        
+
+        # Convert friend requests to a list and remove the friend
+        friendRequests = user.friendRequests.split(",")
+        friendRequests.remove(friendName)
+        user.friendRequests = ",".join(friendRequests)
+
+        # Convert friend requests sent to a list and remove the user
+        friendRequestsSent = friend.friendRequestsSent.split(",")
+        friendRequestsSent.remove(username)
+        friend.friendRequestsSent = ",".join(friendRequestsSent)
+
         # Add the friend to the user's friend list
         if user.friends == "":
             user.friends = friendName
@@ -150,24 +161,8 @@ def acceptFriendRequest(username, friendName):
         else:
             friend.friends = friend.friends + "," + username
 
-
-        # later to do remove from sent friends list
-
-        # Remove the friend request
-        friendRequests = user.friendRequests.split(",")
-        friendRequests.remove(friendName)
-
-        user.friendRequests = ",".join(friendRequests)
-
-        # Remove the sent friend request
-        friendRequestsSent = friend.friendRequestsSent.split(",")
-        friendRequestsSent.remove(username)
-
-        friend.friendRequestsSent = ",".join(friendRequestsSent)
-
-
         session.commit()
-        
+
         return user.friends.split(",")
 
 def rejectFriendRequest(username, friendName):

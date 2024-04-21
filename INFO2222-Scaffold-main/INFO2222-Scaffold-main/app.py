@@ -22,8 +22,6 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_hex()
 socketio = SocketIO(app)
 
-
-
 # don't remove this!!
 import socket_routes
 
@@ -47,16 +45,11 @@ def login_user():
     username = request.json.get("username")
     password = request.json.get("password")
 
-
-    
-
-    # Need to check hash pass here insted    
-
     user =  db.get_user(username)
     if user is None:
         return "Error: User does not exist!"
 
-    # Get the stored hashed password and salt from user object
+    # Get stored hashed password and salt from user object
     stored_hashed_password = user.password
     stored_salt = user.salt
 
@@ -86,7 +79,6 @@ def signup_user():
     if db.validPassword(password) == False:
         return "Error: Password must be at least 8 characters long and contain at least one uppercase letter and one special character"
 
-
     if db.get_user(username) is None:
 
         # HASH AND SALT PASSWORD
@@ -109,15 +101,14 @@ def signup_user():
 def page_not_found(_):
     return render_template('404.jinja'), 404
 
+
 # home page, where the messaging app is
 @app.route("/home")
 def home():
     if request.args.get("username") is None:
         abort(404)
 
-    print("IT WORKSKJDJDJDJSAOIDHUFHEWUIH")
     currentUserName = request.args.get("username")
-    
     
     friend_requests = db.retieve_Friend_Requests(currentUserName)
     friends_list = db.get_friends(currentUserName)
@@ -130,8 +121,6 @@ def home():
     print("Current user = " + currentUserName)
     
     return render_template("home.jinja", username=request.args.get("username"), friend_requests=friend_requests, friends=friends_list, friend_requests_sent=friend_requests_sent)
-
-
 
 
 # HERE THE FRIEND REQUESTS ARE HANDLED
@@ -150,25 +139,20 @@ def add_Friend():
     print(friend_requests)
     
     return redirect(url_for('home', username=username, friend_requests=friend_requests))
-    
-
-
-
-    # IT WORKS! but I need to maybe add a sent requests box
 
 @app.route("/accept_friend_request", methods=["POST"])
 def accept_friend_request():
-    username = request.form.get("username")
-    friend = request.form.get("friend_username")
-    print("Username:" +username)
-    print("Friends name:" +friend)
-    # Print returned friend request list
-    print(db.acceptFriendRequest(username, friend))
+    username = request.form["username"]
+    friend_username = request.form["friend_username"]
+    
+    # Accept friend request
+    db.acceptFriendRequest(username, friend_username)
+    
+    # Retrieve updated friend list and friend requests
+    friends = db.get_friends(username)
     friend_requests = db.retieve_Friend_Requests(username)
-    print(friend_requests)
-
-    return redirect(url_for('home', username=username, friend_requests=friend_requests))
-
+    
+    return render_template("home.jinja", username=username, friends=friends, friend_requests=friend_requests)
 
 @app.route("/reject_friend_request", methods=["POST"])
 def reject_friend_request():
@@ -189,11 +173,8 @@ def save_Public_Key():
     if not request.is_json:
         return "Error: Not JSON", 400
     
-    
     data = request.get_json()
     username = data.get("username")
-    
-    
     
     if not username:
         print("Error: No username")
@@ -203,7 +184,6 @@ def save_Public_Key():
     
     if not public_key:
         return "Error: No public key"
-    
     
     # update the public key in the database
     update = db.put_public_key(username, public_key)
@@ -215,11 +195,8 @@ def save_Public_Key():
     else:
         print("Error: Public key not updated")
         return "Error: Public key not updated"
-    
 
     return redirect(url_for('home', username=username))
-
-
 
 @app.route("/get_Public_Key/<username>", methods=["GET"])
 def get_Public_Key(username):
@@ -227,7 +204,6 @@ def get_Public_Key(username):
     print("Username of public get request: " + username)
     public_key = db.get_public_key(username)
     print(public_key)
-    
     
     if public_key:
         return jsonify({"public_key": public_key})
@@ -237,19 +213,17 @@ def get_Public_Key(username):
     
 @app.route("/get_FriendsList/<username>", methods=["GET"])
 def get_FriendsList(username):
-
     print("Username of friends List: " + username)
     friends_list = db.get_friends(username)
-    
-    
     
     if friends_list:
         return jsonify({"friends_list": friends_list})
     else:
         return jsonify({"error": "friends list not found"}), 404
+    
 
 if __name__ == '__main__':
-    socketio.run(app)
+    socketio.run(app, ssl_context=('./certs/newCerts2/localhostServer.crt', './certs/newCerts2/localhostServer.key'))
 
     # , ssl_context=('./certs/newCerts2/localhostServer.crt', './certs/newCerts2/localhostServer.key')
     
