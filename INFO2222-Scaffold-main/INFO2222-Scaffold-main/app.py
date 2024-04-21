@@ -105,6 +105,9 @@ def page_not_found(_):
 # home page, where the messaging app is
 @app.route("/home")
 def home():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
     if request.args.get("username") is None:
         abort(404)
 
@@ -140,36 +143,36 @@ def add_Friend():
     
     return redirect(url_for('home', username=username, friend_requests=friend_requests))
 
-@app.route("/accept_friend_request", methods=["POST"])
-def accept_friend_request():
-    username = request.form["username"]
-    friend_username = request.form["friend_username"]
+# @app.route("/accept_friend_request", methods=["POST"])
+# def accept_friend_request():
+#     username = request.form["username"]
+#     friend_username = request.form["friend_username"]
     
-    # Accept friend request
-    db.acceptFriendRequest(username, friend_username)
+#     # Accept friend request
+#     db.acceptFriendRequest(username, friend_username)
     
-    # Retrieve updated friend list and friend requests
-    friends = db.get_friends(username)
-    friend_requests = db.retieve_Friend_Requests(username)
+#     # Retrieve updated friend list and friend requests
+#     friends = db.get_friends(username)
+#     friend_requests = db.retieve_Friend_Requests(username)
 
-    emit("user_connected", friend_username, broadcast=True)
+#     emit("user_connected", friend_username, broadcast=True)
     
-    return render_template("home.jinja", username=username, friends=friends, friend_requests=friend_requests)
+#     return render_template("home.jinja", username=username, friends=friends, friend_requests=friend_requests)
 
-@app.route("/reject_friend_request", methods=["POST"])
-def reject_friend_request():
-    username = request.form.get("username")
-    friend = request.form.get("friend_username")
-    print("Username:" +username)
-    print("Friends name:" +friend)
-    # Print returned friend request list
-    print(db.rejectFriendRequest(username, friend))
-    friend_requests = db.retieve_Friend_Requests(username)
-    print(friend_requests)
+# @app.route("/reject_friend_request", methods=["POST"])
+# def reject_friend_request():
+#     username = request.form.get("username")
+#     friend = request.form.get("friend_username")
+#     print("Username:" +username)
+#     print("Friends name:" +friend)
+#     # Print returned friend request list
+#     print(db.rejectFriendRequest(username, friend))
+#     friend_requests = db.retieve_Friend_Requests(username)
+#     print(friend_requests)
 
-    emit("user_disconnected", friend, broadcast=True)
+#     emit("user_disconnected", friend, broadcast=True)
 
-    return redirect(url_for('home', username=username, friend_requests=friend_requests))
+#     return redirect(url_for('home', username=username, friend_requests=friend_requests))
 
 @app.route("/save_Public_Key", methods=["POST"])
 def save_Public_Key():
