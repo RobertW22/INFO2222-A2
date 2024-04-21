@@ -122,16 +122,8 @@
                 {% for request in friend_requests %}
                 <li>
                     {{ request }}
-                    <form action="/accept_friend_request" method="post" style="display: inline;">
-                        <input type="hidden" name="username" value="{{ username }}">
-                        <input type="hidden" name="friend_username" value="{{ request }}">
-                        <button type="submit">Accept</button>
-                    </form>
-                    <form action="/reject_friend_request" method="post" style="display: inline;">
-                        <input type="hidden" name="username" value="{{ username }}">
-                        <input type="hidden" name="friend_username" value="{{ request }}">
-                        <button type="submit">Reject</button>
-                    </form>
+                    <button onclick="acceptFriendRequest('{{ username }}', '{{ request }}')">Accept</button>
+                    <button onclick="rejectFriendRequest('{{ username }}', '{{ request }}')">Reject</button>
                 </li>
                 {% endfor %}
             </ul>
@@ -579,9 +571,33 @@
 
     // Function to open a chatroom when user clicks on an online friend
     function openChatroom(friend) {
-        $("#receiver").val(friend);
-        join_room();
+        if ($(`#status-${friend}`).hasClass("online")) {
+            $("#receiver").val(friend);
+            join_room();
+        } else {
+            alert("You can only message online friends.");
+        }
     }
+
+    function acceptFriendRequest(username, friendUsername) {
+        socket.emit('accept_friend_request', {username: username, friend_username: friendUsername});
+    }
+
+    function rejectFriendRequest(username, friendUsername) {
+        socket.emit('reject_friend_request', {username: username, friend_username: friendUsername});
+    }
+
+    // Event listener for "friend_request_accepted" event
+    socket.on("friend_request_accepted", (friendUsername) => {
+        alert(`Friend request from ${friendUsername} accepted.`);
+        location.reload(); // Reload the page to update the friend list
+    });
+
+    // Event listener for "friend_request_rejected" event
+    socket.on("friend_request_rejected", (friendUsername) => {
+        alert(`Friend request from ${friendUsername} rejected.`);
+        location.reload(); // Reload the page to update the friend list
+    });
     
 </script>
 {% endblock %}

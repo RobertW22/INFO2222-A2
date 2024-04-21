@@ -92,3 +92,33 @@ def leave(username, room_id):
     emit("user_disconnected", username, broadcast=True)
     leave_room(room_id)
     room.leave_room(username)
+
+@socketio.on('accept_friend_request')
+def handle_accept_friend_request(data):
+    username = data['username']
+    friend_username = data['friend_username']
+
+    # Check if the friend request exists
+    if friend_username in db.retieve_Friend_Requests(username):
+        # Accept friend request
+        db.acceptFriendRequest(username, friend_username)
+
+        emit("friend_request_accepted", friend_username, room=request.sid)
+        emit("user_connected", username, broadcast=True)
+    else:
+        print(f"No friend request from {friend_username} to {username}")
+
+@socketio.on('reject_friend_request')
+def handle_reject_friend_request(data):
+    username = data['username']
+    friend_username = data['friend_username']
+
+    # Check if the friend request exists
+    if friend_username in db.retieve_Friend_Requests(username):
+        # Reject friend request
+        db.rejectFriendRequest(username, friend_username)
+
+        emit("friend_request_rejected", friend_username, room=request.sid)
+        emit("user_disconnected", friend_username, broadcast=True)
+    else:
+        print(f"No friend request from {friend_username} to {username}")
