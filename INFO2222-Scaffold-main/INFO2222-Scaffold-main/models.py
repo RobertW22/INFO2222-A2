@@ -10,9 +10,10 @@ Prisma docs also looks so much better in comparison
 or use SQLite, if you're not into fancy ORMs (but be mindful of Injection attacks :) )
 '''
 
-from sqlalchemy import String, table, Column, Integer, ForeignKey, Table
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from typing import Dict, List
+from sqlalchemy import String, Column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from typing import Dict
+# from flask_login import UserMixin
 
 
 
@@ -30,7 +31,7 @@ class Base(DeclarativeBase):
 
 
 # model to store user information
-class User(Base):
+class User(Base): # , UserMixin
     __tablename__ = "user"
     
     # looks complicated but basically means

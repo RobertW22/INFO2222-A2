@@ -5,10 +5,11 @@ the socket event handlers are inside of socket_routes.py
 '''
 
 from flask import Flask, render_template, request, abort, url_for, session, redirect, jsonify
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
+# from flask_login import login_user as flask_login_user, login_required, LoginManager
 import db
 import secrets
-
+from models import User
 
 # import logging
 
@@ -24,6 +25,15 @@ socketio = SocketIO(app)
 
 # don't remove this!!
 import socket_routes
+
+# login_manager = LoginManager()
+# login_manager.init_app(app)
+
+# @login_manager.user_loader
+# def load_user(username):
+#     # Retrieve user object based on username from database
+#     user = db.get_user(username)
+#     return user
 
 # index page
 @app.route("/")
@@ -128,51 +138,16 @@ def home():
 
 # HERE THE FRIEND REQUESTS ARE HANDLED
 @app.route("/add_friend", methods=["POST"])
+# @login_required
 def add_Friend():
-    
     username = request.form.get("username")
+    if username != session['username']:
+        return redirect(url_for('home', username=username, error="Unauthorized access"))
     friendsName = request.form.get("friend_username")
-
-    print("Username:" +username)
-    print("Friends name:" +friendsName)
-    # Print returned friend request list
     print(db.sendFriendRequest(username,friendsName))
     friend_requests = db.retieve_Friend_Requests(friendsName)
-
-    print(friend_requests)
-    
     return redirect(url_for('home', username=username, friend_requests=friend_requests))
 
-# @app.route("/accept_friend_request", methods=["POST"])
-# def accept_friend_request():
-#     username = request.form["username"]
-#     friend_username = request.form["friend_username"]
-    
-#     # Accept friend request
-#     db.acceptFriendRequest(username, friend_username)
-    
-#     # Retrieve updated friend list and friend requests
-#     friends = db.get_friends(username)
-#     friend_requests = db.retieve_Friend_Requests(username)
-
-#     emit("user_connected", friend_username, broadcast=True)
-    
-#     return render_template("home.jinja", username=username, friends=friends, friend_requests=friend_requests)
-
-# @app.route("/reject_friend_request", methods=["POST"])
-# def reject_friend_request():
-#     username = request.form.get("username")
-#     friend = request.form.get("friend_username")
-#     print("Username:" +username)
-#     print("Friends name:" +friend)
-#     # Print returned friend request list
-#     print(db.rejectFriendRequest(username, friend))
-#     friend_requests = db.retieve_Friend_Requests(username)
-#     print(friend_requests)
-
-#     emit("user_disconnected", friend, broadcast=True)
-
-#     return redirect(url_for('home', username=username, friend_requests=friend_requests))
 
 @app.route("/save_Public_Key", methods=["POST"])
 def save_Public_Key():
@@ -202,16 +177,14 @@ def save_Public_Key():
     else:
         print("Error: Public key not updated")
         return "Error: Public key not updated"
-
-    return redirect(url_for('home', username=username))
+    
 
 @app.route("/get_Public_Key/<username>", methods=["GET"])
+# @login_required
 def get_Public_Key(username):
-
-    print("Username of public get request: " + username)
+    # if username != session['username']:
+    #     return jsonify({"error": "Unauthorized access"}), 401
     public_key = db.get_public_key(username)
-    print(public_key)
-    
     if public_key:
         return jsonify({"public_key": public_key})
     else:
@@ -219,15 +192,16 @@ def get_Public_Key(username):
     
     
 @app.route("/get_FriendsList/<username>", methods=["GET"])
+# @login_required
 def get_FriendsList(username):
-    print("Username of friends List: " + username)
+    if username != session['username']:
+        return jsonify({"error": "Unauthorized access"}), 401
     friends_list = db.get_friends(username)
-    
     if friends_list:
         return jsonify({"friends_list": friends_list})
     else:
         return jsonify({"error": "friends list not found"}), 404
-    
+
 
 if __name__ == '__main__':
     socketio.run(app)
