@@ -32,8 +32,31 @@ def insert_user(username: str, password: str, salt: str):
 # gets a user from the database
 def get_user(username: str):
     with Session(engine) as session:
-        return session.query(User).filter_by(username=username).first()
+        return session.get(User, username)
+    
+# puts public key in the user table
+def put_public_key(username: str, public_key: str):
+    with Session(engine) as session:
+        user = session.get(User, username)
+        
+        if user:
+        
+            user.publicKey = public_key
+            
+            savedKey = user.publicKey
+            
+            session.commit()
+            
+    return savedKey
 
+def get_public_key(username: str):
+    with Session(engine) as session:
+        user = session.get(User, username)
+        
+        if user:
+            return user.publicKey
+        else:
+            return "User not found"
 
 #get request to get all the friends of a user
 #there is some fuction that gets posts requests ..

@@ -4,7 +4,7 @@ this is where you'll find all of the get/post request handlers
 the socket event handlers are inside of socket_routes.py
 '''
 
-from flask import Flask, render_template, request, abort, url_for, session, redirect
+from flask import Flask, render_template, request, abort, url_for, session, redirect, jsonify
 from flask_socketio import SocketIO
 import db
 import secrets
@@ -183,10 +183,75 @@ def reject_friend_request():
 
     return redirect(url_for('home', username=username, friend_requests=friend_requests))
 
+@app.route("/save_Public_Key", methods=["POST"])
+def save_Public_Key():
+    
+    if not request.is_json:
+        return "Error: Not JSON", 400
+    
+    
+    data = request.get_json()
+    username = data.get("username")
+    
+    
+    
+    if not username:
+        print("Error: No username")
+        return "Error: No username"
+    
+    public_key = data.get("publicKey")
+    
+    if not public_key:
+        return "Error: No public key"
+    
+    
+    # update the public key in the database
+    update = db.put_public_key(username, public_key)
+    
+    print(update)
+    if update:
+        print("Success: Public key updated")
+        return "Success: Public key updated"
+    else:
+        print("Error: Public key not updated")
+        return "Error: Public key not updated"
+    
 
+    return redirect(url_for('home', username=username))
+
+
+
+@app.route("/get_Public_Key/<username>", methods=["GET"])
+def get_Public_Key(username):
+
+    print("Username of public get request: " + username)
+    public_key = db.get_public_key(username)
+    print(public_key)
+    
+    
+    if public_key:
+        return jsonify({"public_key": public_key})
+    else:
+        return jsonify({"error": "Public key not found"}), 404
+    
+    
+@app.route("/get_FriendsList/<username>", methods=["GET"])
+def get_FriendsList(username):
+
+    print("Username of friends List: " + username)
+    friends_list = db.get_friends(username)
+    
+    
+    
+    if friends_list:
+        return jsonify({"friends_list": friends_list})
+    else:
+        return jsonify({"error": "friends list not found"}), 404
 
 if __name__ == '__main__':
-    socketio.run(app, ssl_context=('./certs/newCerts2/localhostServer.crt', './certs/newCerts2/localhostServer.key'))
+    socketio.run(app)
+
+    # , ssl_context=('./certs/newCerts2/localhostServer.crt', './certs/newCerts2/localhostServer.key')
     
     #/usr/local/share/ca-certificates/myCA.crt'
 
