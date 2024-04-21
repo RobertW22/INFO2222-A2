@@ -249,7 +249,9 @@ def get_FriendsList(username):
         return jsonify({"error": "friends list not found"}), 404
 
 if __name__ == '__main__':
-    socketio.run(app, ssl_context=('./certs/newCerts2/localhostServer.crt', './certs/newCerts2/localhostServer.key'))
+    socketio.run(app)
+
+    # , ssl_context=('./certs/newCerts2/localhostServer.crt', './certs/newCerts2/localhostServer.key')
     
     #/usr/local/share/ca-certificates/myCA.crt'
 
