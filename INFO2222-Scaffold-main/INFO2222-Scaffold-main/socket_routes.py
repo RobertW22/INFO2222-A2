@@ -82,11 +82,13 @@ def join(sender_name, receiver_name):
     room_id = room.create_room(sender_name, receiver_name)
     join_room(room_id)
     emit("incoming", (f"{sender_name} has joined the room. Now talking to {receiver_name}.", "green"), to=room_id)
+    emit("user_connected", sender_name, broadcast=True)
     return room_id
 
 # leave room event handler
 @socketio.on("leave")
 def leave(username, room_id):
     emit("incoming", (f"{username} has left the room.", "red"), to=room_id)
+    emit("user_disconnected", username, broadcast=True)
     leave_room(room_id)
     room.leave_room(username)

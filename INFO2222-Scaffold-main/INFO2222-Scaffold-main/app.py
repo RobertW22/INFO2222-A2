@@ -5,7 +5,7 @@ the socket event handlers are inside of socket_routes.py
 '''
 
 from flask import Flask, render_template, request, abort, url_for, session, redirect, jsonify
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit
 import db
 import secrets
 
@@ -151,6 +151,8 @@ def accept_friend_request():
     # Retrieve updated friend list and friend requests
     friends = db.get_friends(username)
     friend_requests = db.retieve_Friend_Requests(username)
+
+    emit("user_connected", friend_username, broadcast=True)
     
     return render_template("home.jinja", username=username, friends=friends, friend_requests=friend_requests)
 
@@ -164,6 +166,8 @@ def reject_friend_request():
     print(db.rejectFriendRequest(username, friend))
     friend_requests = db.retieve_Friend_Requests(username)
     print(friend_requests)
+
+    emit("user_disconnected", friend, broadcast=True)
 
     return redirect(url_for('home', username=username, friend_requests=friend_requests))
 
@@ -223,7 +227,7 @@ def get_FriendsList(username):
     
 
 if __name__ == '__main__':
-    socketio.run(app, ssl_context=('./certs/newCerts2/localhostServer.crt', './certs/newCerts2/localhostServer.key'))
+    socketio.run(app)
 
     # , ssl_context=('./certs/newCerts2/localhostServer.crt', './certs/newCerts2/localhostServer.key')
     
