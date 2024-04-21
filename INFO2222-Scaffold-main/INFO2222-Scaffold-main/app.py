@@ -224,7 +224,7 @@ def save_Public_Key():
 @app.route("/get_Public_Key/<username>", methods=["GET"])
 def get_Public_Key(username):
 
-    print("Username: " + username)
+    print("Username of public get request: " + username)
     public_key = db.get_public_key(username)
     print(public_key)
     
@@ -233,6 +233,20 @@ def get_Public_Key(username):
         return jsonify({"public_key": public_key})
     else:
         return jsonify({"error": "Public key not found"}), 404
+    
+    
+@app.route("/get_FriendsList/<username>", methods=["GET"])
+def get_FriendsList(username):
+
+    print("Username of friends List: " + username)
+    friends_list = db.get_friends(username)
+    
+    
+    
+    if friends_list:
+        return jsonify({"friends_list": friends_list})
+    else:
+        return jsonify({"error": "friends list not found"}), 404
 
 if __name__ == '__main__':
     socketio.run(app, ssl_context=('./certs/newCerts2/localhostServer.crt', './certs/newCerts2/localhostServer.key'))

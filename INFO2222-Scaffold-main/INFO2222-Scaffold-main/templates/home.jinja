@@ -374,9 +374,20 @@
 
 
     // we emit a join room event to the server to join a room
-    function join_room() {
+    async function join_room() {
        
         let receiver = $("#receiver").val();
+        
+
+        // check if they are friends
+        let friends_list = await fetchFriendsList(username);
+        if (!friends_list.includes(receiver)) {
+            alert("You are not friends with this user");
+            return;
+        }
+
+        
+
 
         // pass in the receiver of our message to the server
         // as well as the current user's username
@@ -569,6 +580,26 @@
             }
         } catch (error) {
             console.error('Error fetching public key:', error);
+            return null;  
+        }
+    }
+
+
+    // get friends list
+    async function fetchFriendsList(username) {
+        try {
+
+            
+            const response = await fetch(`/get_FriendsList/${username}`);
+            if (response.ok) {
+                const data = await response.json();
+                
+                return data.friends_list;
+            } else {
+                throw new Error('Failed to fetch friends list');
+            }
+        } catch (error) {
+            console.error('Error fetching friends list:', error);
             return null;  
         }
     }
